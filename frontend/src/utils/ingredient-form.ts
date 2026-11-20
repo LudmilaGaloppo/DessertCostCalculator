@@ -1,5 +1,5 @@
 import { calculateIngredientCost } from '../domain/costs.js';
-import type { Unit, SupplyInput } from '../types/costs.js';
+import type { Unit, SupplyInput } from '@dessert-cost/shared';
 import type { IngredientFormValues, IngredientFormResult } from '../types/ingredient-form.js';
 
 export const emptyIngredientForm: IngredientFormValues = {

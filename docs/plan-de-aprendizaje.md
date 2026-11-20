@@ -14,7 +14,7 @@ Resultado: datos necesarios y cálculos esperados escritos y comprendidos. Todav
 
 ## Etapa 2. Herramientas y primera función
 
-Implementado: [cálculo de ingredientes de una receta](04-calculo-de-receta.md), con conversiones, validaciones, desglose y subtotal. Código, ejemplo y nueve pruebas del cálculo migrados a TypeScript estricto, con tipos del modelo en `src/types`. Se compilan con TypeScript y se ejecutan con Node.js. La [introducción a la primera función](03-primera-funcion.md) queda como material opcional. La primera interfaz está implementada en la etapa 3; el almacenamiento sigue pendiente.
+Implementado: [cálculo de ingredientes de una receta](04-calculo-de-receta.md), con conversiones, validaciones, desglose y subtotal. Código, ejemplo y nueve pruebas del cálculo migrados a TypeScript estricto. El código de la pantalla y sus cálculos están en `frontend/`, la API en `backend/` y los contratos comunes en `shared/`; ver [estructura del proyecto](07-estructura-del-proyecto.md). La [introducción a la primera función](03-primera-funcion.md) queda como material opcional. El catálogo ya tiene persistencia MongoDB, documentada en las etapas siguientes.
 
 Comparar las responsabilidades de JavaScript, TypeScript, React, React DOM y Vite para la propuesta web. Relacionarlas con React Native y Expo del material de estudio, aclarando qué conocimientos se comparten y qué herramientas cambian según la plataforma.
 

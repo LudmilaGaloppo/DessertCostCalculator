@@ -1,4 +1,4 @@
-# ProyectoDessertsCost
+# DessertCostCalculator
 
 Proyecto personal de Ludmila para aprender a desarrollar una aplicación propia de costos de pastelería, entendiendo las reglas del negocio y las decisiones técnicas.
 
@@ -16,8 +16,9 @@ Uso inicial: personal. Posible evolución: que otros emprendedores puedan utiliz
 - Implementado el [cálculo de ingredientes de una receta](docs/04-calculo-de-receta.md): conversión de unidades, validación, desglose y subtotal. Nueve pruebas verificadas.
 - Primera pantalla local en React, TypeScript y Vite, con campos administrados por React Hook Form. El catálogo permite guardar, recuperar y actualizar insumos en MongoDB local mediante una API Express y Mongoose. Ver [MongoDB y formularios](docs/06-mongodb-y-formularios.md).
 - Compilación, 18 pruebas y una integración real con MongoDB verificadas. Página y API a través de Vite con respuesta HTTP 200; revisión visual e interactiva pendiente por un fallo del entorno de navegador.
-- Desde esta carpeta: `npm ci` para instalar las versiones del lockfile en otro equipo, `npm run dev` para abrir la web, `npm run typecheck` para revisar tipos, `npm test` para probar y `npm run example` para el ejemplo de consola. `npm run build` genera la web en `dist/`. Requiere Node.js 22 o posterior.
-- Para el catálogo, MongoDB debe estar activo y la API debe iniciarse en otra terminal con `npm run dev:api`. Conexión local predeterminada: `mongodb://127.0.0.1:27017/dessert_cost_calculator`; `.env.example` permite configurarla. `npm run test:integration` comprueba persistencia en una base temporal propia.
+- Frontend y backend separados en paquetes propios, conectados mediante npm workspaces. Los contratos de datos compartidos están en `shared/`; ver [la estructura del proyecto](docs/07-estructura-del-proyecto.md).
+- Desde esta carpeta: `npm ci` instala todos los paquetes, `npm run dev` inicia la web, `npm run typecheck` revisa tipos, `npm test` prueba ambas partes y `npm run example` ejecuta el ejemplo de consola. `npm run build` genera la web en `frontend/dist/` y la API en `backend/dist/`. Requiere Node.js 22 o posterior.
+- Para el catálogo, MongoDB debe estar activo y la API debe iniciarse en otra terminal con `npm run dev:api`. Conexión local predeterminada: `mongodb://127.0.0.1:27017/dessert_cost_calculator`; `backend/.env.example` permite configurarla mediante `backend/.env`. `npm run test:integration` comprueba persistencia en una base temporal propia.
 
 ## Por dónde empezar
 
@@ -27,6 +28,7 @@ Uso inicial: personal. Posible evolución: que otros emprendedores puedan utiliz
 4. Continuar con [el código ejecutable y sus decisiones](docs/04-calculo-de-receta.md). La [primera función explicada](docs/03-primera-funcion.md) queda como material introductorio opcional. El recorrido completo está en [el plan de aprendizaje](docs/plan-de-aprendizaje.md).
 5. Abrir [la primera pantalla y su recorrido de datos](docs/05-primera-pantalla.md).
 6. Revisar [MongoDB local y React Hook Form](docs/06-mongodb-y-formularios.md).
+7. Consultar [la separación de frontend, backend y tipos compartidos](docs/07-estructura-del-proyecto.md).
 
 Referencia de apoyo: [Git y GitHub Desktop, guía rápida](docs/git-y-github-desktop.md).
 
@@ -40,10 +42,11 @@ Referencia de apoyo: [Git y GitHub Desktop, guía rápida](docs/git-y-github-des
 - Cada tecnología y carpeta se incorpora con una responsabilidad concreta.
 - Escribir encima de cada función un comentario breve en español que indique para qué sirve y qué hace. Mantenerlo actualizado cuando cambie su comportamiento.
 - Usar React Hook Form en los formularios y MongoDB para la persistencia; el navegador accede a los datos a través de la API, nunca directamente a la base.
+- Mantener el frontend en `frontend/` y el backend en `backend/`, con dependencias y configuraciones propias. Compartir contratos en `shared/`; ninguna aplicación debe importar archivos internos de la otra.
 - Separar el estado «implementado» del estado «comprendido»: un cambio funcionando no demuestra aprendizaje por sí solo.
 - Registrar las decisiones y las dudas que vayan apareciendo en estos documentos.
 - Al terminar cada bloque de cambios, proponer nombres de commits en inglés y explicar qué archivos o cambios agrupar en cada uno. Preferir commits coherentes que dejen el proyecto funcionando y agrupaciones fáciles de seleccionar desde GitHub Desktop. Sugerirlos no implica hacer commits ni subirlos automáticamente.
 
-`superball/admin` es la referencia de convenciones elegida. Ya adoptamos React, React DOM, TypeScript, Vite y React Hook Form, con la pantalla en `src/pages`, los tipos en `src/types`, las peticiones HTTP en `src/services` y la adaptación del formulario en `src/utils`. Las reglas de costo permanecen en `src/domain`. El backend local está en `server` y usa Express y Mongoose; `superball/backend` usa NestJS. Rutas de pantalla y estado global se incorporarán cuando el recorrido los necesite.
+`superball/admin` es la referencia de convenciones elegida. Su equivalente aquí es `frontend/`, con React, TypeScript, Vite y React Hook Form. La API está en `backend/` y usa Express y Mongoose; `superball/backend` usa NestJS. Compartimos la separación de responsabilidades, sin copiar todas las herramientas de ese proyecto. Rutas de pantalla y estado global se incorporarán cuando el recorrido los necesite.
 
 El material de estudio de React Native y Expo aporta conceptos para comparar responsabilidades. El avance de este proyecto no implica completar ni aprobar los módulos de ese curso.

@@ -1,5 +1,5 @@
 {
-  "extends": "./tsconfig.json",
+  "extends": "../tsconfig.base.json",
   "compilerOptions": {
     "module": "ESNext",
     "moduleResolution": "Bundler",
@@ -8,5 +8,6 @@
     "types": ["vite/client", "node"],
     "noEmit": true
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts"]
+  "include": ["src/**/*.ts", "src/**/*.tsx", "vite.config.ts"],
+  "exclude": ["dist", ".node-build", "node_modules"]
 }

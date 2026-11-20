@@ -1,4 +1,4 @@
-import type { SupplyInput, Unit } from '../../src/types/costs.js';
+import type { SupplyInput, Unit } from '@dessert-cost/shared';
 
 /** Identifica un error de entrada que la API debe devolver como HTTP 400. */
 export class InputError extends Error {}

@@ -2,9 +2,9 @@
 // supply = insumo del catálogo con sus datos de compra; supplies = array de insumos.
 // ingredient = uso de un insumo en una receta, con cantidad y unidad propias.
 // ingredient.supplyId referencia supply.id; el precio se obtiene del insumo.
-// Ejemplo y explicación: ../../docs/04-calculo-de-receta.md
+// Ejemplo y explicación: ../../../docs/04-calculo-de-receta.md
 
-import type { Unit, Supply, RecipeIngredient, RecipeIngredientsCost } from '../types/costs.js';
+import type { Unit, Supply, RecipeIngredient, RecipeIngredientsCost } from '@dessert-cost/shared';
 
 interface UnitDefinition {
   dimension: 'mass' | 'volume' | 'count';

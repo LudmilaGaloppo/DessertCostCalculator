@@ -1,5 +1,5 @@
 import { Schema, type Connection } from 'mongoose';
-import type { Supply, SupplyInput } from '../../src/types/costs.js';
+import type { Supply, SupplyInput } from '@dessert-cost/shared';
 
 export interface SupplyRepository {
   list(): Promise<Supply[]>;

@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
 import mongoose from 'mongoose';
-import { createApp } from '../../server/app.js';
-import { createSupplyRepository } from '../../server/supplies/repository.js';
-import type { Supply } from '../../src/types/costs.js';
+import { createApp } from '../../src/app.js';
+import { createSupplyRepository } from '../../src/supplies/repository.js';
+import type { Supply } from '@dessert-cost/shared';
 
 test('MongoDB local persiste insumos, permite releerlos desde otra conexión y actualiza por ID', async (context) => {
   const uri = process.env.MONGODB_URI ?? 'mongodb://127.0.0.1:27017/dessert_cost_calculator';

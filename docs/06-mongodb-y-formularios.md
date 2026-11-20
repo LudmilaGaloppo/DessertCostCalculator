@@ -20,7 +20,7 @@ MongoDB debe estar funcionando. La API escucha en `127.0.0.1:3001`; Vite muestra
 
 La conexión predeterminada es `mongodb://127.0.0.1:27017/dessert_cost_calculator`. La colección se llama `supplies`. Podés abrir esa dirección en MongoDB Compass para inspeccionarla; Compass es el cliente, no reemplaza al servicio de MongoDB.
 
-Para cambiar la conexión, copiá `.env.example` a `.env` y editá `MONGODB_URI`. No hace falta hacerlo para la conexión local predeterminada. `.env` y sus variantes están ignorados por Git. Si cambiás `API_PORT`, también actualizá el destino del proxy en `vite.config.ts`.
+Para cambiar la conexión, copiá `backend/.env.example` a `backend/.env` y editá `MONGODB_URI`. No hace falta hacerlo para la conexión local predeterminada. `.env` y sus variantes están ignorados por Git. Si cambiás `API_PORT`, también actualizá el destino del proxy en `frontend/vite.config.ts`. La separación de carpetas está explicada en [estructura del proyecto](07-estructura-del-proyecto.md).
 
 ## Qué se puede guardar
 
@@ -41,12 +41,12 @@ React Hook Form → servicio HTTP del frontend → API Express → modelo Mongoo
 
 | Pieza | Responsabilidad |
 |---|---|
-| [IngredientCalculator.tsx](../src/pages/IngredientCalculator.tsx) | Formulario, errores por campo, selección del catálogo y resultados |
-| [services/supplies.ts](../src/services/supplies.ts) | Peticiones HTTP para listar, crear y actualizar insumos |
-| [server/app.ts](../server/app.ts) | Rutas y respuestas de la API |
-| [server/supplies/validation.ts](../server/supplies/validation.ts) | Valida datos externos antes de escribir en la base |
-| [server/supplies/repository.ts](../server/supplies/repository.ts) | Esquema y operaciones de MongoDB mediante Mongoose |
-| [server/index.ts](../server/index.ts) | Conexión a MongoDB, inicio y cierre de la API |
+| [IngredientCalculator.tsx](../frontend/src/pages/IngredientCalculator.tsx) | Formulario, errores por campo, selección del catálogo y resultados |
+| [services/supplies.ts](../frontend/src/services/supplies.ts) | Peticiones HTTP para listar, crear y actualizar insumos |
+| [backend/src/app.ts](../backend/src/app.ts) | Rutas y respuestas de la API |
+| [backend/src/supplies/validation.ts](../backend/src/supplies/validation.ts) | Valida datos externos antes de escribir en la base |
+| [backend/src/supplies/repository.ts](../backend/src/supplies/repository.ts) | Esquema y operaciones de MongoDB mediante Mongoose |
+| [backend/src/index.ts](../backend/src/index.ts) | Conexión a MongoDB, inicio y cierre de la API |
 
 El navegador usa rutas `/api/...`. El proxy de Vite reenvía esas peticiones al backend; la URI de MongoDB solo se utiliza en el servidor. No se debe definir como una variable `VITE_`, porque esas variables pueden terminar en el código del navegador.
 

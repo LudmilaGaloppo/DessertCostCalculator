@@ -1,4 +1,4 @@
-import type { Unit } from './costs.js';
+import type { Unit } from '@dessert-cost/shared';
 
 // Los campos conservan texto mientras se editan, incluso cuando están vacíos.
 export interface IngredientFormValues {

@@ -1,4 +1,4 @@
-import type { Supply, SupplyInput } from '../types/costs';
+import type { Supply, SupplyInput } from '@dessert-cost/shared';
 
 /** Envía una petición a la API local y transforma respuestas fallidas en mensajes para la pantalla. */
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {

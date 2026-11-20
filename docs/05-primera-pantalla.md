@@ -18,12 +18,12 @@ Abrí la dirección local que muestra Vite. El botón «Cargar ejemplo» usa la 
 
 | Archivo | Responsabilidad |
 |---|---|
-| [main.tsx](../src/main.tsx) | Conecta React con el contenedor HTML y monta `App` |
-| [App.tsx](../src/App.tsx) | Compone la pantalla inicial |
-| [IngredientCalculator.tsx](../src/pages/IngredientCalculator.tsx) | Maneja los campos, los eventos y la presentación del resultado o error |
-| [ingredient-form.ts](../src/utils/ingredient-form.ts) | Convierte el texto ingresado a datos válidos y llama al cálculo |
-| [costs.ts](../src/domain/costs.ts) | Conserva las reglas de conversión y costo, independientes de React |
-| [ingredient-form.ts (tipos)](../src/types/ingredient-form.ts) | Distingue los textos editables del formulario de los números y unidades del resultado |
+| [main.tsx](../frontend/src/main.tsx) | Conecta React con el contenedor HTML y monta `App` |
+| [App.tsx](../frontend/src/App.tsx) | Compone la pantalla inicial |
+| [IngredientCalculator.tsx](../frontend/src/pages/IngredientCalculator.tsx) | Maneja los campos, los eventos y la presentación del resultado o error |
+| [ingredient-form.ts](../frontend/src/utils/ingredient-form.ts) | Convierte el texto ingresado a datos válidos y llama al cálculo |
+| [costs.ts](../frontend/src/domain/costs.ts) | Conserva las reglas de conversión y costo, independientes de React |
+| [ingredient-form.ts (tipos)](../frontend/src/types/ingredient-form.ts) | Distingue los textos editables del formulario de los números y unidades del resultado |
 
 Recorrido: editar campos → enviar formulario → validar y convertir textos → calcular costo → mostrar resultado.
 
@@ -49,9 +49,9 @@ Adoptamos React, TypeScript y Vite siguiendo la referencia de `superball/admin`.
 ## Herramientas y comprobaciones
 
 - React describe la interfaz y sus actualizaciones; React DOM la monta en el navegador.
-- Vite inicia el servidor de desarrollo y genera la web en `dist/` con `npm run build`.
-- `tsconfig.app.json` comprueba los archivos de la web, incluyendo TSX, usando resolución de módulos para Vite.
-- `tsconfig.json` compila la lógica, los ejemplos y las pruebas para Node en `.node-build/`. Se conservan los imports `.js` de la lógica compartida para que Node pueda ejecutarla; Vite también los resuelve.
+- Vite inicia el servidor de desarrollo y genera la web en `frontend/dist/`.
+- `frontend/tsconfig.json` comprueba los archivos de la web, incluyendo TSX, usando resolución de módulos para Vite.
+- `frontend/tsconfig.tests.json` compila la lógica, los ejemplos y las pruebas para Node en `frontend/.node-build/`. Se conservan los imports `.js` entre archivos de esa lógica para que Node pueda ejecutarla; Vite también los resuelve.
 - `npm run typecheck` comprueba ambas configuraciones; `npm test` ejecuta las 13 pruebas; `npm run example` conserva el ejemplo de consola.
 
 ## Próximo bloque

@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { calculateIngredientForm, emptyIngredientForm, exampleIngredientForm, supplyInputFromForm, validateDecimalField } from '../utils/ingredient-form';
 import { listSupplies, saveSupply } from '../services/supplies';
 import type { IngredientFormValues, IngredientFormResult } from '../types/ingredient-form';
-import type { Supply } from '../types/costs';
+import type { Supply } from '@dessert-cost/shared';
 
 const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
 const decimal = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 6 });

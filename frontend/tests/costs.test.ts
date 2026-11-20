@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { convertQuantity, calculateIngredientCost, calculateRecipeIngredients } from '../src/domain/costs.js';
-import type { Supply, RecipeIngredient, Unit } from '../src/types/costs.js';
+import type { Supply, RecipeIngredient, Unit } from '@dessert-cost/shared';
 
 const flour: Supply = Object.freeze({ id: 'flour', name: 'Harina', purchaseQuantity: 2.5, purchaseUnit: 'kg', purchasePrice: 6000 });
 const ingredient: RecipeIngredient = Object.freeze({ supplyId: 'flour', quantity: 375, unit: 'g' });

@@ -4,10 +4,10 @@ Estado: implementado y verificado con nueve pruebas. Este bloque abarca conversi
 
 ## Código y ejecución
 
-- [Tipos del modelo](../src/types/costs.ts).
-- [Lógica de costos](../src/domain/costs.ts).
-- [Ejemplo de receta y catálogo](../examples/recipe-cost.ts).
-- [Pruebas](../tests/costs.test.ts).
+- [Tipos del modelo](../shared/src/costs.d.ts).
+- [Lógica de costos](../frontend/src/domain/costs.ts).
+- [Ejemplo de receta y catálogo](../frontend/examples/recipe-cost.ts).
+- [Pruebas](../frontend/tests/costs.test.ts).
 
 Desde la carpeta `ProyectoDessertsCost`:
 
@@ -19,7 +19,7 @@ npm run example
 
 Se utiliza TypeScript con modo estricto y Node.js 22 o posterior. En un equipo nuevo, ejecutar primero `npm ci`. `typescript` revisa los tipos y genera JavaScript; `@types/node` describe las APIs de Node para el compilador. Son dependencias de desarrollo.
 
-`npm run typecheck` revisa tipos sin generar archivos. Desde la incorporación de la pantalla, `npm run build` genera la web en `dist/`. `npm test` y `npm run example` compilan la lógica de Node a `.node-build/` antes de ejecutar. Se editan los archivos `.ts` y `.tsx`, no los `.js` generados. `dist/`, `.node-build/` y `node_modules/` están excluidos de Git; `package-lock.json` conserva las versiones instaladas.
+`npm run typecheck` revisa tipos sin generar archivos. `npm run build` genera la web en `frontend/dist/` y la API en `backend/dist/`. Las pruebas y el ejemplo del cálculo se compilan a `frontend/.node-build/`. Se editan los archivos fuente, no los `.js` generados. Las salidas y `node_modules/` están excluidos de Git; el `package-lock.json` raíz conserva las versiones instaladas. Ver [estructura del proyecto](07-estructura-del-proyecto.md).
 
 Los imports locales terminan en `.js` porque esa es la extensión que Node ejecutará después de compilar. Con la configuración `NodeNext`, TypeScript resuelve esos imports contra los archivos `.ts` fuente. `import type` importa únicamente una definición de tipo y desaparece del JavaScript generado.
 
@@ -53,7 +53,7 @@ Estos son nombres elegidos para el modelo del proyecto, no palabras especiales d
 
 Por ejemplo, `supply` puede describir una compra de 2,5 kg de harina por $6.000, mientras que `ingredient` indica que una receta utiliza 375 g de esa harina. La relación es `ingredient.supplyId === supply.id`.
 
-Usamos dos nombres porque representan datos distintos del mismo producto: el insumo aporta los datos de compra y el ingrediente aporta los datos de uso. El precio no se copia al ingrediente; se consulta en el catálogo. El ejemplo completo está en [recipe-cost.ts](../examples/recipe-cost.ts).
+Usamos dos nombres porque representan datos distintos del mismo producto: el insumo aporta los datos de compra y el ingrediente aporta los datos de uso. El precio no se copia al ingrediente; se consulta en el catálogo. El ejemplo completo está en [recipe-cost.ts](../frontend/examples/recipe-cost.ts).
 
 ## Decisiones del modelo
 

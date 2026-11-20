@@ -118,7 +118,7 @@ Estos comandos tienen efectos distintos: elegí según qué quieras conservar.
 - **`.gitignore`:** indica archivos que no querés empezar a seguir. No deja de seguir automáticamente archivos que ya estaban registrados.
 - **`git config user.name "Tu nombre"`** y **`git config user.email "Tu correo"`** configuran la autoría para ese repositorio. No inician sesión en GitHub. Con `--global`, se aplican por defecto a tus repositorios del usuario.
 
-En este proyecto se excluyen `node_modules/`, `dist/` y `.node-build/`. El código, los documentos y `package-lock.json` sí se versionan.
+En este proyecto se excluyen `node_modules/`, `dist/`, `.node-build/` y `.test-build/`, también dentro de cada aplicación. Los archivos `.env` locales se ignoran; `backend/.env.example` sí se versiona. El código, los documentos y el `package-lock.json` raíz también se versionan.
 
 ## Tu flujo con GitHub Desktop
 

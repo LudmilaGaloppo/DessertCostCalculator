@@ -1,5 +1,5 @@
 import { calculateRecipeIngredients } from '../src/domain/costs.js';
-import type { Supply, Recipe } from '../src/types/costs.js';
+import type { Supply, Recipe } from '@dessert-cost/shared';
 
 // Datos hipotéticos para probar el cálculo, no una receta real completa.
 const supplies: Supply[] = [

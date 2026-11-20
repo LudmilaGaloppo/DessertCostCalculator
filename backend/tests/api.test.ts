@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { once } from 'node:events';
-import { createApp } from '../server/app.js';
-import type { SupplyRepository } from '../server/supplies/repository.js';
-import type { Supply } from '../src/types/costs.js';
+import { createApp } from '../src/app.js';
+import type { SupplyRepository } from '../src/supplies/repository.js';
+import type { Supply } from '@dessert-cost/shared';
 
 const id = '507f1f77bcf86cd799439011';
 const input = { name: 'Harina', purchaseQuantity: 2.5, purchaseUnit: 'kg', purchasePrice: 6000 };

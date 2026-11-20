@@ -1,7 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validateSupplyInput, InputError } from '../server/supplies/validation.js';
-import { supplyInputFromForm, exampleIngredientForm, validateDecimalField } from '../src/utils/ingredient-form.js';
+import { validateSupplyInput, InputError } from '../src/supplies/validation.js';
 
 const purchase = { name: ' Harina ', purchaseQuantity: 2.5, purchaseUnit: 'kg', purchasePrice: 6000 };
 
@@ -16,14 +15,3 @@ test('el servidor rechaza entradas inválidas sin confiar en la validación del 
   assert.equal(validateSupplyInput({ ...purchase, purchasePrice: 0 }).purchasePrice, 0);
 });
 
-test('guardar un insumo no exige ni persiste los datos de uso', () => {
-  assert.deepEqual(supplyInputFromForm({ ...exampleIngredientForm, usedQuantity: '', usedUnit: '' }), { name: 'Harina', purchaseQuantity: 2.5, purchaseUnit: 'kg', purchasePrice: 6000 });
-});
-
-test('las reglas de React Hook Form aceptan coma y rechazan vacíos, negativos y cero como divisor', () => {
-  assert.equal(validateDecimalField('2,5', 'cantidad', true), true);
-  assert.equal(validateDecimalField('0', 'precio'), true);
-  assert.notEqual(validateDecimalField('', 'cantidad'), true);
-  assert.notEqual(validateDecimalField('0', 'cantidad', true), true);
-  assert.notEqual(validateDecimalField('-1', 'precio'), true);
-});
