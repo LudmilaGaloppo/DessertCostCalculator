@@ -3,4 +3,7 @@ import react from '@vitejs/plugin-react';
 
 export default defineConfig({
   plugins: [react()],
+  // El navegador usa /api; Vite reenvía esas peticiones al backend local.
+  server: { proxy: { '/api': 'http://127.0.0.1:3001' } },
+  preview: { proxy: { '/api': 'http://127.0.0.1:3001' } },
 });

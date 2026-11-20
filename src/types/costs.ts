@@ -1,13 +1,17 @@
 // Unión de literales: solo estas unidades son válidas en el modelo.
 export type Unit = 'g' | 'kg' | 'ml' | 'l' | 'unit';
 
-// Insumo del catálogo, con sus datos de compra.
-export interface Supply {
-  id: string;
+// Datos que se envían al guardar un insumo; el servidor asigna su identificador.
+export interface SupplyInput {
   name: string;
   purchaseQuantity: number;
   purchaseUnit: Unit;
   purchasePrice: number;
+}
+
+// Insumo guardado del catálogo, con sus datos de compra y su identificador.
+export interface Supply extends SupplyInput {
+  id: string;
 }
 
 // Uso de un insumo dentro de una receta.

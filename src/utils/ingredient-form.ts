@@ -1,5 +1,5 @@
 import { calculateIngredientCost } from '../domain/costs.js';
-import type { Unit } from '../types/costs.js';
+import type { Unit, SupplyInput } from '../types/costs.js';
 import type { IngredientFormValues, IngredientFormResult } from '../types/ingredient-form.js';
 
 export const emptyIngredientForm: IngredientFormValues = {
@@ -32,17 +32,39 @@ function parseUnit(value: string): Unit {
 
 /** Valida los textos del formulario, construye el insumo y su uso, y delega el costo en la lógica existente. */
 export function calculateIngredientForm(values: IngredientFormValues): IngredientFormResult {
-  const name = values.name.trim();
-  if (!name) throw new Error('Ingresá el nombre del insumo.');
-  const purchaseQuantity = parseDecimal(values.purchaseQuantity, 'la cantidad comprada');
-  const purchasePrice = parseDecimal(values.purchasePrice, 'el precio de compra');
+  const { name, purchaseQuantity, purchasePrice, purchaseUnit } = supplyInputFromForm(values);
   const usedQuantity = parseDecimal(values.usedQuantity, 'la cantidad utilizada');
-  const purchaseUnit = parseUnit(values.purchaseUnit);
   const usedUnit = parseUnit(values.usedUnit);
-  // ID local de esta simulación: no crea un registro persistente en un catálogo.
   const cost = calculateIngredientCost(
     { id: 'current-supply', name, purchaseQuantity, purchaseUnit, purchasePrice },
     { supplyId: 'current-supply', quantity: usedQuantity, unit: usedUnit },
   );
   return { name, purchaseQuantity, purchaseUnit, purchasePrice, usedQuantity, usedUnit, cost };
+}
+
+/** Prepara solo los datos de compra para guardar el insumo, sin exigir una cantidad de uso. */
+export function supplyInputFromForm(values: IngredientFormValues): SupplyInput {
+  const name = values.name.trim();
+  if (!name) throw new Error('Ingresá el nombre del insumo.');
+  if (name.length > 120) throw new Error('El nombre no puede superar los 120 caracteres.');
+  const purchaseQuantity = parseDecimal(values.purchaseQuantity, 'la cantidad comprada');
+  const purchasePrice = parseDecimal(values.purchasePrice, 'el precio de compra');
+  const purchaseUnit = parseUnit(values.purchaseUnit);
+  // Un uso cero comprueba las reglas de compra existentes sin agregar costo a una receta.
+  calculateIngredientCost(
+    { id: 'current-supply', name, purchaseQuantity, purchaseUnit, purchasePrice },
+    { supplyId: 'current-supply', quantity: 0, unit: purchaseUnit },
+  );
+  return { name, purchaseQuantity, purchaseUnit, purchasePrice };
+}
+
+/** Devuelve true o un mensaje para las reglas de validación de React Hook Form. */
+export function validateDecimalField(value: string, label: string, positive = false): true | string {
+  try {
+    const number = parseDecimal(value, label);
+    if (positive ? number <= 0 : number < 0) return `Ingresá un valor ${positive ? 'mayor que cero' : 'no negativo'} para ${label}.`;
+    return true;
+  } catch (error) {
+    return error instanceof Error ? error.message : 'Ingresá un número válido.';
+  }
 }
