@@ -3,5 +3,7 @@ export interface RecipeFormValues {
   yieldQuantity: string;
   yieldUnit: string;
   workingHours: string;
+  gasOvenMinutes: string;
+  electricMixerMinutes: string;
   ingredients: { supplyId: string; quantity: string; unit: string }[];
 }

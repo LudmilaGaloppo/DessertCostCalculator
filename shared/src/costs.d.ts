@@ -27,6 +27,8 @@ export interface RecipeInput {
   yieldQuantity: number;
   yieldUnit: Unit;
   workingHours: number | null;
+  gasOvenMinutes: number | null;
+  electricMixerMinutes: number | null;
   ingredients: readonly RecipeIngredient[];
 }
 
@@ -48,11 +50,16 @@ export interface RecipeIngredientsCost {
 // Configuración general usada para valorar el trabajo de cualquier receta.
 export interface CostSettings {
   hourlyRate: number | null;
+  gasDailyAverage: number | null;
+  electricityDailyAverage: number | null;
 }
 
 // Desglose conocido de producción; null distingue un costo pendiente de un costo cero.
 export interface ProductionCost extends RecipeIngredientsCost {
   laborCost: number | null;
+  gasCost: number | null;
+  electricityCost: number | null;
+  energyCost: number;
   productionSubtotal: number;
   missingInputs: string[];
 }

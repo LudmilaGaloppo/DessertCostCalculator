@@ -80,8 +80,8 @@ test('una receta vacía tiene subtotal cero; rechaza colecciones inválidas', ()
 });
 
 test('suma la mano de obra al subtotal con la tarifa general', () => {
-  const recipe: RecipeInput = { name: 'Cookies', yieldQuantity: 12, yieldUnit: 'unit', workingHours: 3, ingredients: [ingredient] };
-  const result = calculateProductionCost(recipe, [flour], { hourlyRate: 5000 });
+  const recipe: RecipeInput = { name: 'Cookies', yieldQuantity: 12, yieldUnit: 'unit', workingHours: 3, gasOvenMinutes: 0, electricMixerMinutes: 0, ingredients: [ingredient] };
+  const result = calculateProductionCost(recipe, [flour], { hourlyRate: 5000, gasDailyAverage: null, electricityDailyAverage: null });
   assert.equal(result.ingredientsSubtotal, 900);
   assert.equal(result.laborCost, 15000);
   assert.equal(result.productionSubtotal, 15900);
@@ -89,17 +89,27 @@ test('suma la mano de obra al subtotal con la tarifa general', () => {
 });
 
 test('mantiene el costo parcial cuando faltan horas o tarifa', () => {
-  const recipe: RecipeInput = { name: 'Cookies', yieldQuantity: 12, yieldUnit: 'unit', workingHours: null, ingredients: [ingredient] };
-  assert.deepEqual(calculateProductionCost(recipe, [flour], { hourlyRate: null }).missingInputs, ['horas de trabajo', 'valor de la hora']);
-  const result = calculateProductionCost({ ...recipe, workingHours: 3 }, [flour], { hourlyRate: null });
+  const recipe: RecipeInput = { name: 'Cookies', yieldQuantity: 12, yieldUnit: 'unit', workingHours: null, gasOvenMinutes: 0, electricMixerMinutes: 0, ingredients: [ingredient] };
+  assert.deepEqual(calculateProductionCost(recipe, [flour], { hourlyRate: null, gasDailyAverage: null, electricityDailyAverage: null }).missingInputs, ['horas de trabajo', 'valor de la hora']);
+  const result = calculateProductionCost({ ...recipe, workingHours: 3 }, [flour], { hourlyRate: null, gasDailyAverage: null, electricityDailyAverage: null });
   assert.equal(result.laborCost, null);
   assert.equal(result.productionSubtotal, 900);
   assert.deepEqual(result.missingInputs, ['valor de la hora']);
 });
 
+test('prorratea los promedios diarios sobre los minutos usados por la receta', () => {
+  const recipe: RecipeInput = { name: 'Cookies', yieldQuantity: 12, yieldUnit: 'unit', workingHours: 0, gasOvenMinutes: 90, electricMixerMinutes: 5, ingredients: [ingredient] };
+  const result = calculateProductionCost(recipe, [flour], { hourlyRate: null, gasDailyAverage: 3000, electricityDailyAverage: 2850 });
+  assert.equal(result.laborCost, 0);
+  assert.equal(result.gasCost, 187.5);
+  assert.ok(result.electricityCost !== null && Math.abs(result.electricityCost - 9.895833333333334) < 1e-10);
+  assert.ok(Math.abs(result.energyCost - 197.39583333333334) < 1e-10);
+  assert.deepEqual(result.missingInputs, []);
+});
+
 test('cotiza una caja con un único sticker y rechaza superar su capacidad', () => {
-  const recipe: RecipeInput = { name: 'Cookies', yieldQuantity: 12, yieldUnit: 'unit', workingHours: 3, ingredients: [ingredient] };
-  const production = calculateProductionCost(recipe, [flour], { hourlyRate: 5000 });
+  const recipe: RecipeInput = { name: 'Cookies', yieldQuantity: 12, yieldUnit: 'unit', workingHours: 3, gasOvenMinutes: 0, electricMixerMinutes: 0, ingredients: [ingredient] };
+  const production = calculateProductionCost(recipe, [flour], { hourlyRate: 5000, gasDailyAverage: null, electricityDailyAverage: null });
   const box: Packaging = { id: 'box', name: 'Caja', kind: 'box', purchaseQuantity: 4, purchasePrice: 4800, capacity: 12, capacityUnit: 'unit', stickersPerPackage: 1 };
   const result = calculateSaleQuoteCost(recipe, production, box, { name: 'Sticker', purchaseQuantity: 80, purchasePrice: 28000 }, 5);
   assert.equal(result.productsCost, 6625);
@@ -111,8 +121,8 @@ test('cotiza una caja con un único sticker y rechaza superar su capacidad', () 
 });
 
 test('cotiza una bolsa y un sticker por cada cookie individual', () => {
-  const recipe: RecipeInput = { name: 'Cookies', yieldQuantity: 12, yieldUnit: 'unit', workingHours: 3, ingredients: [ingredient] };
-  const production = calculateProductionCost(recipe, [flour], { hourlyRate: 5000 });
+  const recipe: RecipeInput = { name: 'Cookies', yieldQuantity: 12, yieldUnit: 'unit', workingHours: 3, gasOvenMinutes: 0, electricMixerMinutes: 0, ingredients: [ingredient] };
+  const production = calculateProductionCost(recipe, [flour], { hourlyRate: 5000, gasDailyAverage: null, electricityDailyAverage: null });
   const bag: Packaging = { id: 'bag', name: 'Bolsa', kind: 'individual', purchaseQuantity: 100, purchasePrice: 1700, capacity: 1, capacityUnit: 'unit', stickersPerPackage: 1 };
   const result = calculateSaleQuoteCost(recipe, production, bag, { name: 'Sticker', purchaseQuantity: 80, purchasePrice: 28000 }, 5);
   assert.equal(result.packageCount, 5);

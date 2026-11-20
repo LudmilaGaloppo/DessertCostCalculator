@@ -3,14 +3,17 @@ import type { CostSettings } from '@dessert-cost/shared';
 
 export interface CostSettingsRepository {
   get(): Promise<CostSettings>;
-  update(hourlyRate: number): Promise<CostSettings>;
+  updateHourlyRate(hourlyRate: number): Promise<CostSettings>;
+  updateEnergy(gasDailyAverage: number, electricityDailyAverage: number): Promise<CostSettings>;
 }
 
-interface CostSettingsDocument { key: string; hourlyRate: number }
+interface CostSettingsDocument { key: string; hourlyRate?: number; gasDailyAverage?: number; electricityDailyAverage?: number }
 
 const settingsSchema = new Schema<CostSettingsDocument>({
   key: { type: String, required: true, unique: true },
-  hourlyRate: { type: Number, required: true, validate: isPositiveFinite },
+  hourlyRate: { type: Number, validate: isPositiveFinite },
+  gasDailyAverage: { type: Number, validate: isPositiveFinite },
+  electricityDailyAverage: { type: Number, validate: isPositiveFinite },
 }, { timestamps: true, versionKey: false, bufferCommands: false });
 
 /** Impide guardar una tarifa vacía, infinita, negativa o cero. */
@@ -21,17 +24,24 @@ export function createCostSettingsRepository(connection: Connection): CostSettin
   const SettingsModel = connection.model<CostSettingsDocument>('CostSettings', settingsSchema, 'settings');
 
   return {
-    /** Devuelve null mientras todavía no se haya configurado el valor de la hora. */
+    /** Devuelve null en cada valor que todavía no haya sido configurado. */
     async get() {
       const document = await SettingsModel.findOne({ key: 'costs' }).lean().exec();
-      return { hourlyRate: document?.hourlyRate ?? null };
+      return { hourlyRate: document?.hourlyRate ?? null, gasDailyAverage: document?.gasDailyAverage ?? null, electricityDailyAverage: document?.electricityDailyAverage ?? null };
     },
-    /** Guarda una única configuración compartida, creándola si no existía. */
-    async update(hourlyRate) {
+    /** Guarda el valor compartido de la hora, creando la configuración si no existía. */
+    async updateHourlyRate(hourlyRate) {
       const document = await SettingsModel.findOneAndUpdate(
         { key: 'costs' }, { $set: { hourlyRate } }, { upsert: true, returnDocument: 'after', runValidators: true },
       ).lean().exec();
-      return { hourlyRate: document.hourlyRate };
+      return { hourlyRate: document.hourlyRate ?? null, gasDailyAverage: document.gasDailyAverage ?? null, electricityDailyAverage: document.electricityDailyAverage ?? null };
+    },
+    /** Guarda los promedios diarios usados por el prorrateo simple de energía. */
+    async updateEnergy(gasDailyAverage, electricityDailyAverage) {
+      const document = await SettingsModel.findOneAndUpdate(
+        { key: 'costs' }, { $set: { gasDailyAverage, electricityDailyAverage } }, { upsert: true, returnDocument: 'after', runValidators: true },
+      ).lean().exec();
+      return { hourlyRate: document.hourlyRate ?? null, gasDailyAverage: document.gasDailyAverage ?? null, electricityDailyAverage: document.electricityDailyAverage ?? null };
     },
   };
 }

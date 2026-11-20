@@ -12,3 +12,10 @@ export async function saveHourlyRate(hourlyRate: number): Promise<CostSettings> 
     method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ hourlyRate }),
   })).settings;
 }
+
+/** Guarda los promedios diarios usados por la estimación sencilla de energía. */
+export async function saveEnergySettings(gasDailyAverage: number, electricityDailyAverage: number): Promise<CostSettings> {
+  return (await request<{ settings: CostSettings }>('/api/settings/energy', {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ gasDailyAverage, electricityDailyAverage }),
+  })).settings;
+}

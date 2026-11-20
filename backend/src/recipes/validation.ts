@@ -11,12 +11,16 @@ function isUnit(value: unknown): value is Unit {
 /** Valida una receta y sus referencias al catálogo, devolviendo solo datos persistibles. */
 export function validateRecipeInput(body: unknown, supplies: readonly Supply[]): RecipeInput {
   if (!body || typeof body !== 'object' || Array.isArray(body)) throw new InputError('Enviá los datos de una receta.');
-  const { name, yieldQuantity, yieldUnit, workingHours, ingredients } = body as Record<string, unknown>;
+  const { name, yieldQuantity, yieldUnit, workingHours, gasOvenMinutes, electricMixerMinutes, ingredients } = body as Record<string, unknown>;
   if (typeof name !== 'string' || !name.trim() || name.trim().length > 120) throw new InputError('El nombre debe tener entre 1 y 120 caracteres.');
   if (typeof yieldQuantity !== 'number' || !Number.isFinite(yieldQuantity) || yieldQuantity <= 0) throw new InputError('El rendimiento debe ser mayor que cero.');
   if (!isUnit(yieldUnit)) throw new InputError('Elegí una unidad de rendimiento válida.');
   const normalizedWorkingHours = workingHours ?? null;
+  const normalizedGasMinutes = gasOvenMinutes ?? null;
+  const normalizedElectricMinutes = electricMixerMinutes ?? null;
   if (normalizedWorkingHours !== null && (typeof normalizedWorkingHours !== 'number' || !Number.isFinite(normalizedWorkingHours) || normalizedWorkingHours < 0)) throw new InputError('Las horas de trabajo deben ser un número no negativo o null.');
+  if (normalizedGasMinutes !== null && (typeof normalizedGasMinutes !== 'number' || !Number.isFinite(normalizedGasMinutes) || normalizedGasMinutes < 0)) throw new InputError('Los minutos de horno deben ser un número no negativo o null.');
+  if (normalizedElectricMinutes !== null && (typeof normalizedElectricMinutes !== 'number' || !Number.isFinite(normalizedElectricMinutes) || normalizedElectricMinutes < 0)) throw new InputError('Los minutos de batidora deben ser un número no negativo o null.');
   if (!Array.isArray(ingredients) || ingredients.length < 1 || ingredients.length > 100) throw new InputError('La receta debe tener entre 1 y 100 ingredientes.');
 
   /** Comprueba la cantidad y la compatibilidad de cada ingrediente con su compra. */
@@ -30,5 +34,5 @@ export function validateRecipeInput(body: unknown, supplies: readonly Supply[]):
     return { supplyId, quantity, unit };
   }
 
-  return { name: name.trim(), yieldQuantity, yieldUnit, workingHours: normalizedWorkingHours, ingredients: ingredients.map(validateIngredient) };
+  return { name: name.trim(), yieldQuantity, yieldUnit, workingHours: normalizedWorkingHours, gasOvenMinutes: normalizedGasMinutes, electricMixerMinutes: normalizedElectricMinutes, ingredients: ingredients.map(validateIngredient) };
 }

@@ -28,7 +28,7 @@ export default function PackagingCalculator() {
   const [packaging, setPackaging] = useState<Packaging[]>([]);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [supplies, setSupplies] = useState<Supply[]>([]);
-  const [settings, setSettings] = useState<CostSettings>({ hourlyRate: null });
+  const [settings, setSettings] = useState<CostSettings>({ hourlyRate: null, gasDailyAverage: null, electricityDailyAverage: null });
   const [stickers, setStickers] = useState<StickerSettings>({ name: null, purchaseQuantity: null, purchasePrice: null });
   const [selectedPackagingId, setSelectedPackagingId] = useState('');
   const [result, setResult] = useState<QuoteView | null>(null);

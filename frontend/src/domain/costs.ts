@@ -101,24 +101,48 @@ export function calculateRecipeIngredients(
   return { items, ingredientsSubtotal };
 }
 
-/** Suma ingredientes y mano de obra conocida, e informa qué entrada falta sin asumir costo cero. */
+/** Prorratea un promedio diario sobre los minutos usados; conserva null cuando falta una entrada. */
+function calculateDailyProration(minutes: number | null, dailyAverage: number | null, timeLabel: string, rateLabel: string, missingInputs: string[]): number | null {
+  if (minutes === null) missingInputs.push(timeLabel);
+  if (minutes !== 0 && dailyAverage === null) missingInputs.push(rateLabel);
+  if (minutes === null || (minutes !== 0 && dailyAverage === null)) return null;
+  requireNumber(minutes, timeLabel);
+  if (minutes === 0) return 0;
+  if (dailyAverage === null) return null;
+  requireNumber(dailyAverage, rateLabel, true);
+  const cost = dailyAverage / 24 * (minutes / 60);
+  requireNumber(cost, `El costo de ${timeLabel}`);
+  return cost;
+}
+
+/** Suma ingredientes, trabajo y energía conocidos, e informa entradas pendientes sin asumir cero. */
 export function calculateProductionCost(recipe: RecipeInput, supplies: readonly Supply[], settings: CostSettings): ProductionCost {
   const ingredientCost = calculateRecipeIngredients(recipe, supplies);
   if (!settings || typeof settings !== 'object') throw new TypeError('La configuración de costos es obligatoria.');
   const missingInputs: string[] = [];
   let laborCost: number | null = null;
-  if (recipe.workingHours === null) missingInputs.push('horas de trabajo');
-  if (settings.hourlyRate === null) missingInputs.push('valor de la hora');
-  if (recipe.workingHours !== null && settings.hourlyRate !== null) {
+  if (recipe.workingHours === null) {
+    missingInputs.push('horas de trabajo');
+    if (settings.hourlyRate === null) missingInputs.push('valor de la hora');
+  }
+  else if (recipe.workingHours === 0) laborCost = 0;
+  else if (settings.hourlyRate === null) missingInputs.push('valor de la hora');
+  else {
     requireNumber(recipe.workingHours, 'Las horas de trabajo');
     requireNumber(settings.hourlyRate, 'El valor de la hora', true);
     laborCost = recipe.workingHours * settings.hourlyRate;
     requireNumber(laborCost, 'El costo de mano de obra');
   }
+  const gasCost = calculateDailyProration(recipe.gasOvenMinutes, settings.gasDailyAverage, 'minutos de horno', 'promedio diario de gas', missingInputs);
+  const electricityCost = calculateDailyProration(recipe.electricMixerMinutes, settings.electricityDailyAverage, 'minutos de batidora', 'promedio diario de electricidad', missingInputs);
+  const energyCost = (gasCost ?? 0) + (electricityCost ?? 0);
   return {
     ...ingredientCost,
     laborCost,
-    productionSubtotal: ingredientCost.ingredientsSubtotal + (laborCost ?? 0),
+    gasCost,
+    electricityCost,
+    energyCost,
+    productionSubtotal: ingredientCost.ingredientsSubtotal + (laborCost ?? 0) + energyCost,
     missingInputs,
   };
 }

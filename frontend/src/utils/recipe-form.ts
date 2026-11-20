@@ -5,7 +5,7 @@ import { calculateRecipeIngredients } from '../domain/costs.js';
 
 /** Crea campos vacíos independientes para una nueva receta. */
 export function emptyRecipeForm(): RecipeFormValues {
-  return { name: '', yieldQuantity: '', yieldUnit: 'unit', workingHours: '', ingredients: [{ supplyId: '', quantity: '', unit: 'g' }] };
+  return { name: '', yieldQuantity: '', yieldUnit: 'unit', workingHours: '', gasOvenMinutes: '', electricMixerMinutes: '', ingredients: [{ supplyId: '', quantity: '', unit: 'g' }] };
 }
 
 /** Convierte los números persistidos en textos editables por React Hook Form. */
@@ -13,6 +13,8 @@ export function recipeToForm(recipe: RecipeInput): RecipeFormValues {
   return {
     name: recipe.name, yieldQuantity: String(recipe.yieldQuantity), yieldUnit: recipe.yieldUnit,
     workingHours: recipe.workingHours === null ? '' : String(recipe.workingHours),
+    gasOvenMinutes: recipe.gasOvenMinutes === null ? '' : String(recipe.gasOvenMinutes),
+    electricMixerMinutes: recipe.electricMixerMinutes === null ? '' : String(recipe.electricMixerMinutes),
     ingredients: recipe.ingredients.map((item) => ({ ...item, quantity: String(item.quantity) })),
   };
 }
@@ -34,7 +36,11 @@ export function recipeInputFromForm(values: RecipeFormValues, supplies: readonly
 
   const workingHours = values.workingHours.trim() === '' ? null : parseDecimal(values.workingHours, 'las horas de trabajo');
   if (workingHours !== null && workingHours < 0) throw new Error('Las horas de trabajo no pueden ser negativas.');
-  const input = { name, yieldQuantity, yieldUnit: parseUnit(values.yieldUnit), workingHours, ingredients: values.ingredients.map(toIngredient) };
+  const gasOvenMinutes = values.gasOvenMinutes.trim() === '' ? null : parseDecimal(values.gasOvenMinutes, 'los minutos de horno');
+  const electricMixerMinutes = values.electricMixerMinutes.trim() === '' ? null : parseDecimal(values.electricMixerMinutes, 'los minutos de batidora');
+  if (gasOvenMinutes !== null && gasOvenMinutes < 0) throw new Error('Los minutos de horno no pueden ser negativos.');
+  if (electricMixerMinutes !== null && electricMixerMinutes < 0) throw new Error('Los minutos de batidora no pueden ser negativos.');
+  const input = { name, yieldQuantity, yieldUnit: parseUnit(values.yieldUnit), workingHours, gasOvenMinutes, electricMixerMinutes, ingredients: values.ingredients.map(toIngredient) };
   calculateRecipeIngredients(input, supplies);
   return input;
 }

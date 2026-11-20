@@ -7,7 +7,7 @@ import { validateDecimalField } from '../utils/ingredient-form';
 import { calculateProductionCost } from '../domain/costs';
 import { listSupplies } from '../services/supplies';
 import { listRecipes, saveRecipe } from '../services/recipes';
-import { getCostSettings, saveHourlyRate } from '../services/settings';
+import { getCostSettings, saveEnergySettings, saveHourlyRate } from '../services/settings';
 import { parseDecimal } from '../utils/ingredient-form';
 
 const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
@@ -27,6 +27,7 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 export default function RecipeEditor() {
   const { register, control, handleSubmit, reset, clearErrors, formState: { errors } } = useForm<RecipeFormValues>({ defaultValues: emptyRecipeForm() });
   const { register: registerSettings, handleSubmit: handleSettingsSubmit, reset: resetSettings, formState: { errors: settingsErrors } } = useForm<{ hourlyRate: string }>({ defaultValues: { hourlyRate: '' } });
+  const energyForm = useForm<{ gasDailyAverage: string; electricityDailyAverage: string }>({ defaultValues: { gasDailyAverage: '', electricityDailyAverage: '' } });
   // useFieldArray mantiene un ID estable por fila aunque se agreguen o quiten ingredientes.
   const { fields, append, remove } = useFieldArray({ control, name: 'ingredients' });
   const [supplies, setSupplies] = useState<Supply[]>([]);
@@ -36,7 +37,7 @@ export default function RecipeEditor() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
-  const [settings, setSettings] = useState<CostSettings>({ hourlyRate: null });
+  const [settings, setSettings] = useState<CostSettings>({ hourlyRate: null, gasDailyAverage: null, electricityDailyAverage: null });
   const [result, setResult] = useState<ProductionCost | null>(null);
   const requestInProgress = useRef(false);
 
@@ -55,6 +56,7 @@ export default function RecipeEditor() {
       if (signal?.aborted) return;
       setSupplies(currentSupplies); setRecipes(currentRecipes); setSettings(currentSettings);
       resetSettings({ hourlyRate: currentSettings.hourlyRate === null ? '' : String(currentSettings.hourlyRate) });
+      energyForm.reset({ gasDailyAverage: currentSettings.gasDailyAverage === null ? '' : String(currentSettings.gasDailyAverage), electricityDailyAverage: currentSettings.electricityDailyAverage === null ? '' : String(currentSettings.electricityDailyAverage) });
     } catch (cause) {
       if (!signal?.aborted) setError(cause instanceof Error ? cause.message : 'No se pudieron cargar los datos.');
     } finally { if (!signal?.aborted) setLoading(false); }
@@ -91,6 +93,23 @@ export default function RecipeEditor() {
       setMessage('Valor de la hora actualizado. Volvé a calcular la receta.');
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'No se pudo guardar el valor de la hora.');
+    } finally { requestInProgress.current = false; setBusy(false); }
+  }
+
+  /** Guarda los promedios diarios usados para estimar gas y electricidad. */
+  async function updateEnergySettings(values: { gasDailyAverage: string; electricityDailyAverage: string }) {
+    if (requestInProgress.current) return;
+    requestInProgress.current = true; setBusy(true); setError(''); setMessage(''); setResult(null);
+    try {
+      const gasDailyAverage = parseDecimal(values.gasDailyAverage, 'el promedio diario de gas');
+      const electricityDailyAverage = parseDecimal(values.electricityDailyAverage, 'el promedio diario de electricidad');
+      if (gasDailyAverage <= 0 || electricityDailyAverage <= 0) throw new Error('Los promedios diarios deben ser mayores que cero.');
+      const saved = await saveEnergySettings(gasDailyAverage, electricityDailyAverage);
+      setSettings(saved);
+      energyForm.reset({ gasDailyAverage: String(saved.gasDailyAverage), electricityDailyAverage: String(saved.electricityDailyAverage) });
+      setMessage('Promedios de energía actualizados. Volvé a calcular la receta.');
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'No se pudieron guardar los promedios de energía.');
     } finally { requestInProgress.current = false; setBusy(false); }
   }
 
@@ -135,6 +154,10 @@ export default function RecipeEditor() {
           <fieldset><legend>Mano de obra</legend><p className="section-help">Ingresá las horas atribuibles a una tanda. Podés dejarlo pendiente sin convertirlo en cero.</p>
             <label className="field">Horas de trabajo<input {...register('workingHours', { validate: (value) => value.trim() === '' || validateDecimalField(value, 'las horas de trabajo') })} inputMode="decimal" placeholder="3" aria-invalid={Boolean(errors.workingHours)} aria-describedby="working-hours-error" /><FieldError id="working-hours-error" message={errors.workingHours?.message} /></label>
           </fieldset>
+          <fieldset><legend>Energía de la tanda</legend><p className="section-help">Incluí el precalentado dentro del tiempo de horno. Los intervalos de batido se suman.</p><div className="field-row">
+            <label className="field">Horno a gas (minutos)<input {...register('gasOvenMinutes', { validate: (value) => value.trim() === '' || validateDecimalField(value, 'los minutos de horno') })} inputMode="decimal" placeholder="90" aria-invalid={Boolean(errors.gasOvenMinutes)} /><FieldError id="gas-minutes-error" message={errors.gasOvenMinutes?.message} /></label>
+            <label className="field">Batidora (minutos)<input {...register('electricMixerMinutes', { validate: (value) => value.trim() === '' || validateDecimalField(value, 'los minutos de batidora') })} inputMode="decimal" placeholder="5" aria-invalid={Boolean(errors.electricMixerMinutes)} /><FieldError id="electric-minutes-error" message={errors.electricMixerMinutes?.message} /></label>
+          </div></fieldset>
           <fieldset><legend>Ingredientes</legend><p className="section-help">Elegí insumos guardados. Por ejemplo, usá 375 g de una harina comprada en kg.</p>
             {fields.map((field, index) => <fieldset className="ingredient-row" key={field.id}><legend>Ingrediente {index + 1}</legend>
               <label className="field">Insumo<select {...register(`ingredients.${index}.supplyId`, { required: 'Elegí un insumo.' })} aria-invalid={Boolean(errors.ingredients?.[index]?.supplyId)} aria-describedby={`supply-error-${index}`}><option value="">Seleccionar insumo</option>{supplies.map((supply) => <option key={supply.id} value={supply.id}>{supply.name} · compra en {supply.purchaseUnit}</option>)}</select><FieldError id={`supply-error-${index}`} message={errors.ingredients?.[index]?.supplyId?.message} /></label>
@@ -151,9 +174,10 @@ export default function RecipeEditor() {
       </form>
       <aside className="result-column" aria-label="Recetas guardadas y subtotal">
         <form className="catalog-card" onSubmit={handleSettingsSubmit(updateHourlyRate)} noValidate><div className="card-heading"><h2>Valor de tu hora</h2></div><p className="section-help">Configuración general para todas las recetas.</p><label className="field">Tarifa por hora (ARS)<input {...registerSettings('hourlyRate', { validate: (value) => validateDecimalField(value, 'el valor de la hora', true) })} inputMode="decimal" placeholder="Por ejemplo, 5000" aria-invalid={Boolean(settingsErrors.hourlyRate)} aria-describedby="hourly-rate-error" /><FieldError id="hourly-rate-error" message={settingsErrors.hourlyRate?.message} /></label><button type="submit" className="secondary-button save-button" disabled={busy || loading}>Guardar tarifa</button></form>
+        <form className="catalog-card" onSubmit={energyForm.handleSubmit(updateEnergySettings)} noValidate><fieldset className="form-controls" disabled={busy || loading}><div className="card-heading"><h2>Promedios diarios de energía</h2></div><p className="section-help">Estimación sencilla y actualizable con cada factura.</p><label className="field">Gas por día (ARS)<input {...energyForm.register('gasDailyAverage', { validate: (value) => validateDecimalField(value, 'el promedio diario de gas', true) })} inputMode="decimal" placeholder="3000" aria-invalid={Boolean(energyForm.formState.errors.gasDailyAverage)} /><FieldError id="gas-daily-error" message={energyForm.formState.errors.gasDailyAverage?.message} /></label><label className="field price-field">Electricidad por día (ARS)<input {...energyForm.register('electricityDailyAverage', { validate: (value) => validateDecimalField(value, 'el promedio diario de electricidad', true) })} inputMode="decimal" placeholder="2850" aria-invalid={Boolean(energyForm.formState.errors.electricityDailyAverage)} /><FieldError id="electricity-daily-error" message={energyForm.formState.errors.electricityDailyAverage?.message} /></label><button type="submit" className="secondary-button save-button">Guardar promedios</button></fieldset></form>
         <section className="catalog-card"><div className="card-heading"><h2>Recetas guardadas</h2><button type="button" className="text-button" disabled={busy || loading} onClick={() => void refreshData()}>Actualizar listas</button></div><label className="field">Cargar una receta<select value={selectedId} onChange={loadRecipe} disabled={busy || loading}><option value="">Nueva receta</option>{recipes.map((recipe) => <option key={recipe.id} value={recipe.id}>{recipe.name}</option>)}</select></label>{loading && <p role="status">Cargando datos…</p>}{!loading && !recipes.length && <p className="section-help catalog-help">Todavía no hay recetas guardadas.</p>}{!loading && !supplies.length && <p className="section-help catalog-help">Primero guardá tus compras en Insumos.</p>}</section>
-        <section className="result-card" aria-live="polite"><p className="eyebrow">COSTOS CONTEMPLADOS</p>{result ? <><h2 className="result-amount">{pesos.format(result.productionSubtotal)}</h2><dl className="result-breakdown"><div><dt>Ingredientes</dt><dd>{pesos.format(result.ingredientsSubtotal)}</dd></div><div><dt>Mano de obra</dt><dd>{result.laborCost === null ? 'Pendiente' : pesos.format(result.laborCost)}</dd></div>{result.items.map((item, index) => <div className="ingredient-detail" key={index}><dt>{item.name}<br /><small>{decimal.format(item.quantity)} {item.unit === 'unit' ? 'unidades' : item.unit}</small></dt><dd>{pesos.format(item.cost)}</dd></div>)}</dl>{result.missingInputs.length > 0 && <p className="pending-cost" role="status">Falta completar: {result.missingInputs.join(' y ')}. El importe mostrado es parcial.</p>}<p className="result-footnote">Precios y tarifa consultados al realizar este cálculo.</p></> : <><h2 className="result-placeholder">Tu receta, ingrediente a ingrediente.</h2><p className="result-description">Completá el formulario para ver el desglose.</p></>}</section>
-        <section className="scope-note"><h2>Costo parcial de producción</h2><p>Incluye ingredientes y mano de obra cuando están configurados. Energía y envases siguen fuera de este subtotal. No es el precio de venta.</p></section>
+        <section className="result-card" aria-live="polite"><p className="eyebrow">COSTOS CONTEMPLADOS</p>{result ? <><h2 className="result-amount">{pesos.format(result.productionSubtotal)}</h2><dl className="result-breakdown"><div><dt>Ingredientes</dt><dd>{pesos.format(result.ingredientsSubtotal)}</dd></div><div><dt>Mano de obra</dt><dd>{result.laborCost === null ? 'Pendiente' : pesos.format(result.laborCost)}</dd></div><div><dt>Horno a gas</dt><dd>{result.gasCost === null ? 'Pendiente' : pesos.format(result.gasCost)}</dd></div><div><dt>Batidora eléctrica</dt><dd>{result.electricityCost === null ? 'Pendiente' : pesos.format(result.electricityCost)}</dd></div>{result.items.map((item, index) => <div className="ingredient-detail" key={index}><dt>{item.name}<br /><small>{decimal.format(item.quantity)} {item.unit === 'unit' ? 'unidades' : item.unit}</small></dt><dd>{pesos.format(item.cost)}</dd></div>)}</dl>{result.missingInputs.length > 0 && <p className="pending-cost" role="status">Falta completar: {result.missingInputs.join(' y ')}. El importe mostrado es parcial.</p>}<p className="result-footnote">Precios, tarifa y promedios diarios consultados al calcular.</p></> : <><h2 className="result-placeholder">Tu receta, ingrediente a ingrediente.</h2><p className="result-description">Completá el formulario para ver el desglose.</p></>}</section>
+        <section className="scope-note"><h2>Costo de producción contemplado</h2><p>Incluye ingredientes, mano de obra y el prorrateo simple de energía cuando están configurados. Los envases se suman al cotizar la venta.</p></section>
       </aside>
     </div>
   </main>;

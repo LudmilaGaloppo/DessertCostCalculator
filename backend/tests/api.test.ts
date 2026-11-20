@@ -33,11 +33,15 @@ test('la API valida JSON, crea insumos y distingue errores de entrada, ausencia 
     async update() { return null; },
   };
   let hourlyRate: number | null = null;
+  let gasDailyAverage: number | null = null;
+  let electricityDailyAverage: number | null = null;
   const settingsRepository: CostSettingsRepository = {
     /** Devuelve el valor actual de la configuración simulada. */
-    async get() { return { hourlyRate }; },
+    async get() { return { hourlyRate, gasDailyAverage, electricityDailyAverage }; },
     /** Conserva la tarifa para verificar lectura y actualización por HTTP. */
-    async update(value) { hourlyRate = value; return { hourlyRate }; },
+    async updateHourlyRate(value) { hourlyRate = value; return { hourlyRate, gasDailyAverage, electricityDailyAverage }; },
+    /** Conserva los promedios diarios simulados. */
+    async updateEnergy(gas, electricity) { gasDailyAverage = gas; electricityDailyAverage = electricity; return { hourlyRate, gasDailyAverage, electricityDailyAverage }; },
   };
   const savedPackaging: Packaging[] = [];
   const packagingRepository: PackagingRepository = {
@@ -69,7 +73,7 @@ test('la API valida JSON, crea insumos y distingue errores de entrada, ausencia 
   assert.equal(created.status, 201);
   assert.deepEqual(await created.json(), { supply: { ...input, id } });
   assert.deepEqual(await (await fetch(url)).json(), { supplies: [{ ...input, id }] });
-  const recipeInput = { name: 'Cookies', yieldQuantity: 12, yieldUnit: 'unit', workingHours: 3, ingredients: [{ supplyId: id, quantity: 375, unit: 'g' }] };
+  const recipeInput = { name: 'Cookies', yieldQuantity: 12, yieldUnit: 'unit', workingHours: 3, gasOvenMinutes: 90, electricMixerMinutes: 5, ingredients: [{ supplyId: id, quantity: 375, unit: 'g' }] };
   const recipesUrl = `http://127.0.0.1:${address.port}/api/recipes`;
   const recipeCreated = await fetch(recipesUrl, { method: 'POST', headers, body: JSON.stringify(recipeInput) });
   assert.equal(recipeCreated.status, 201);
@@ -77,9 +81,10 @@ test('la API valida JSON, crea insumos y distingue errores de entrada, ausencia 
   assert.deepEqual(await (await fetch(recipesUrl)).json(), { recipes: [{ ...recipeInput, id: recipeId }] });
   assert.equal((await fetch(recipesUrl, { method: 'POST', headers, body: JSON.stringify({ ...recipeInput, ingredients: [{ ...recipeInput.ingredients[0], unit: 'ml' }] }) })).status, 400);
   const settingsUrl = `http://127.0.0.1:${address.port}/api/settings/costs`;
-  assert.deepEqual(await (await fetch(settingsUrl)).json(), { settings: { hourlyRate: null } });
+  assert.deepEqual(await (await fetch(settingsUrl)).json(), { settings: { hourlyRate: null, gasDailyAverage: null, electricityDailyAverage: null } });
   assert.equal((await fetch(settingsUrl, { method: 'PUT', headers, body: JSON.stringify({ hourlyRate: 0 }) })).status, 400);
-  assert.deepEqual(await (await fetch(settingsUrl, { method: 'PUT', headers, body: JSON.stringify({ hourlyRate: 5000 }) })).json(), { settings: { hourlyRate: 5000 } });
+  assert.deepEqual(await (await fetch(settingsUrl, { method: 'PUT', headers, body: JSON.stringify({ hourlyRate: 5000 }) })).json(), { settings: { hourlyRate: 5000, gasDailyAverage: null, electricityDailyAverage: null } });
+  assert.deepEqual(await (await fetch(`http://127.0.0.1:${address.port}/api/settings/energy`, { method: 'PUT', headers, body: JSON.stringify({ gasDailyAverage: 3000, electricityDailyAverage: 2850 }) })).json(), { settings: { hourlyRate: 5000, gasDailyAverage: 3000, electricityDailyAverage: 2850 } });
   const packagingUrl = `http://127.0.0.1:${address.port}/api/packaging`;
   const boxInput = { name: 'Caja', kind: 'box', purchaseQuantity: 4, purchasePrice: 4800, capacity: 12, capacityUnit: 'unit', stickersPerPackage: 1 };
   assert.equal((await fetch(packagingUrl, { method: 'POST', headers, body: JSON.stringify({ ...boxInput, capacity: 0 }) })).status, 400);

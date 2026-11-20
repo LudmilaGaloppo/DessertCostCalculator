@@ -13,6 +13,8 @@ const recipe: Recipe = {
   yieldQuantity: 12,
   yieldUnit: 'unit',
   workingHours: 3,
+  gasOvenMinutes: 90,
+  electricMixerMinutes: 5,
   ingredients: [
     { supplyId: 'flour', quantity: 375, unit: 'g' },
     { supplyId: 'sugar', quantity: 150, unit: 'g' },

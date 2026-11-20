@@ -4,7 +4,7 @@ import type { SupplyRepository } from './supplies/repository.js';
 import type { RecipeRepository } from './recipes/repository.js';
 import { validateRecipeInput } from './recipes/validation.js';
 import type { CostSettingsRepository } from './settings/repository.js';
-import { validateHourlyRate } from './settings/validation.js';
+import { validateEnergySettings, validateHourlyRate } from './settings/validation.js';
 import type { PackagingRepository } from './packaging/repository.js';
 import { validatePackagingInput } from './packaging/validation.js';
 import type { StickerSettingsRepository } from './packaging/sticker-settings.js';
@@ -69,7 +69,14 @@ export function createApp(repository: SupplyRepository, recipes: RecipeRepositor
   /** Valida y guarda el valor general de la hora de trabajo. */
   async function updateCostSettings(request: Request, response: Response) {
     if (!request.is('application/json')) { response.status(415).json({ message: 'Enviá JSON.' }); return; }
-    response.json({ settings: await settings.update(validateHourlyRate(request.body)) });
+    response.json({ settings: await settings.updateHourlyRate(validateHourlyRate(request.body)) });
+  }
+
+  /** Valida y guarda los promedios diarios usados para prorratear energía. */
+  async function updateEnergySettings(request: Request, response: Response) {
+    if (!request.is('application/json')) { response.status(415).json({ message: 'Enviá JSON.' }); return; }
+    const values = validateEnergySettings(request.body);
+    response.json({ settings: await settings.updateEnergy(values.gasDailyAverage, values.electricityDailyAverage) });
   }
 
   /** Devuelve el catálogo de envases disponibles para cotizar. */
@@ -126,6 +133,7 @@ export function createApp(repository: SupplyRepository, recipes: RecipeRepositor
   app.put('/api/recipes/:id', updateRecipe);
   app.get('/api/settings/costs', getCostSettings);
   app.put('/api/settings/costs', updateCostSettings);
+  app.put('/api/settings/energy', updateEnergySettings);
   app.get('/api/packaging', listPackaging);
   app.post('/api/packaging', createPackaging);
   app.put('/api/packaging/:id', updatePackaging);
