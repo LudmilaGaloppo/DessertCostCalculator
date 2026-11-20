@@ -84,10 +84,18 @@ export default function IngredientCalculator() {
     try {
       if (!await trigger(['name', 'purchaseQuantity', 'purchasePrice', 'purchaseUnit'], { shouldFocus: true })) return;
       setIsSaving(true);
+      const editingSupply = Boolean(selectedSupplyId);
       const saved = await saveSupply(supplyInputFromForm(getValues()), selectedSupplyId || undefined);
       setSupplies((current) => [...current.filter((supply) => supply.id !== saved.id), saved].sort((a, b) => a.name.localeCompare(b.name)));
-      setSelectedSupplyId(saved.id);
-      setSaveMessage('Insumo guardado. Podés recuperarlo después de recargar la página.');
+      if (editingSupply) {
+        setSelectedSupplyId(saved.id);
+        setSaveMessage('Cambios guardados en el insumo.');
+      } else {
+        reset(emptyIngredientForm);
+        setSelectedSupplyId('');
+        setResult(null);
+        setSaveMessage('Insumo guardado. El formulario está listo para cargar otro.');
+      }
     } catch (error) {
       setCatalogError(error instanceof Error ? error.message : 'No se pudo guardar el insumo.');
     } finally { savingRequest.current = false; setIsSaving(false); }
