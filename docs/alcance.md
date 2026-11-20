@@ -74,7 +74,7 @@ Poder recuperar insumos y recetas al volver a usar la aplicación. La forma de a
 | Trabajo | Valor de la hora y qué tiempos se atribuyen a cada receta |
 | Gastos generales | Cómo repartirlos sin duplicar gastos ya incluidos |
 | Venta | Cómo representar envases, comisiones y otros gastos por presentación o canal cuando correspondan |
-| Almacenamiento | Dónde guardar y cómo recuperar y respaldar los datos |
+| Almacenamiento | MongoDB local elegido e integrado para insumos; quedan recetas, presupuestos y estrategia de respaldo |
 | Redondeo | Precisión de cálculo y tratamiento del precio elegido para vender |
 
 ## Posibles ampliaciones

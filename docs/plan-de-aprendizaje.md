@@ -32,6 +32,8 @@ Comportamiento implementado: editar un campo retira el resultado anterior; envia
 
 ## Etapa 4. Catálogo, recetas y navegación
 
+Primer avance implementado: catálogo de insumos persistido en MongoDB local, con creación, lectura y actualización desde el formulario. React Hook Form administra los campos. Ver [la integración y sus comprobaciones](06-mongodb-y-formularios.md). La edición de recetas completas y la navegación siguen pendientes.
+
 Guardar varios insumos en el estado de la aplicación, seleccionarlos en una receta y obtener su subtotal. Introducir identificadores y relaciones entre datos. Incorporar navegación cuando haya pantallas con responsabilidades distintas.
 
 Resultado: reutilizar un insumo en distintas recetas y explicar de dónde sale cada costo.
@@ -44,7 +46,7 @@ Resultado: explicar cuánto cuesta la presentación, qué gastos incluye y qué 
 
 ## Etapa 6. Persistencia y uso personal
 
-Elegir almacenamiento, explicar su alcance y diseñar respaldo. Resolver qué ocurre cuando cambia el precio de un insumo. Verificar el recorrido con recetas reales y revisar el uso desde un celular.
+MongoDB local ya fue elegido y conectado para el catálogo. Quedan la persistencia de recetas y presupuestos, el respaldo y el historial de precios. Verificar el recorrido con recetas reales y revisar el uso desde un celular.
 
 Resultado: recuperar los datos al volver y conocer los límites de esa primera versión.
 

@@ -1,5 +1,7 @@
 # Primera pantalla: calculadora de un ingrediente
 
+Actualización: el formulario ahora utiliza React Hook Form y el catálogo se guarda en MongoDB local. El estado vigente, los comandos y las responsabilidades están en [MongoDB local y formularios](06-mongodb-y-formularios.md). Este documento conserva la explicación de la primera versión.
+
 Estado: implementada localmente con React, TypeScript y Vite. Compilación correcta, 13 pruebas aprobadas (9 del cálculo y 4 de la entrada del formulario) y respuesta HTTP 200 del servidor. La verificación visual e interactiva en navegador quedó pendiente por un fallo del entorno de automatización.
 
 ## Abrir la aplicación
