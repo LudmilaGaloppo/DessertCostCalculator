@@ -16,3 +16,8 @@ export async function saveSupply(input: SupplyInput, id?: string): Promise<Suppl
   });
   return response.supply;
 }
+
+/** Elimina un insumo que no esté referenciado por ninguna receta guardada. */
+export async function deleteSupply(id: string): Promise<void> {
+  await request<void>(`/api/supplies/${encodeURIComponent(id)}`, { method: 'DELETE' });
+}

@@ -58,6 +58,11 @@ test('MongoDB local persiste insumos, permite releerlos desde otra conexión y a
   const updatedRecipeResponse = await fetch(`${recipesUrl}/${recipe.id}`, { method: 'PUT', headers, body: JSON.stringify({ ...recipeInput, yieldQuantity: 15 }) });
   assert.equal(updatedRecipeResponse.status, 200);
   assert.equal(((await updatedRecipeResponse.json()) as { recipe: Recipe }).recipe.yieldQuantity, 15);
+  assert.equal((await fetch(`${url}/${supply.id}`, { method: 'DELETE' })).status, 409);
+  const unusedResponse = await fetch(url, { method: 'POST', headers, body: JSON.stringify({ ...input, name: 'Azúcar sin uso' }) });
+  const { supply: unusedSupply } = await unusedResponse.json() as { supply: Supply };
+  assert.equal((await fetch(`${url}/${unusedSupply.id}`, { method: 'DELETE' })).status, 204);
+  assert.equal((await createSupplyRepository(connection).list()).some((item) => item.id === unusedSupply.id), false);
   const settingsUrl = `http://127.0.0.1:${address.port}/api/settings/costs`;
   assert.deepEqual(await (await fetch(settingsUrl)).json(), { settings: { hourlyRate: null, gasDailyAverage: null, electricityDailyAverage: null } });
   assert.equal((await fetch(settingsUrl, { method: 'PUT', headers, body: JSON.stringify({ hourlyRate: 5000 }) })).status, 200);

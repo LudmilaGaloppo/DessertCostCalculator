@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import { calculateIngredientForm, emptyIngredientForm, exampleIngredientForm, supplyInputFromForm, validateDecimalField } from '../utils/ingredient-form';
-import { listSupplies, saveSupply } from '../services/supplies';
+import { deleteSupply, listSupplies, saveSupply } from '../services/supplies';
 import type { IngredientFormValues, IngredientFormResult } from '../types/ingredient-form';
 import type { Supply } from '@dessert-cost/shared';
 
@@ -93,6 +93,25 @@ export default function IngredientCalculator() {
     } finally { savingRequest.current = false; setIsSaving(false); }
   }
 
+  /** Pide confirmación y elimina el insumo seleccionado si ninguna receta lo utiliza. */
+  async function handleDeleteSupply() {
+    const selected = supplies.find((supply) => supply.id === selectedSupplyId);
+    if (!selected || savingRequest.current) return;
+    if (!window.confirm(`¿Eliminar “${selected.name}” del catálogo? Esta acción no se puede deshacer.`)) return;
+    savingRequest.current = true;
+    setIsSaving(true);
+    setCatalogError('');
+    setSaveMessage('');
+    try {
+      await deleteSupply(selected.id);
+      setSupplies((current) => current.filter((supply) => supply.id !== selected.id));
+      handleReset();
+      setSaveMessage(`Se eliminó “${selected.name}” del catálogo.`);
+    } catch (error) {
+      setCatalogError(error instanceof Error ? error.message : 'No se pudo eliminar el insumo.');
+    } finally { savingRequest.current = false; setIsSaving(false); }
+  }
+
   /** Carga la compra elegida desde MongoDB y conserva la cantidad de uso que se estaba editando. */
   function handleLoadSupply(event: ChangeEvent<HTMLSelectElement>) {
     const supply = supplies.find((item) => item.id === event.currentTarget.value);
@@ -150,7 +169,10 @@ export default function IngredientCalculator() {
                 <input id="purchasePrice" {...register('purchasePrice', { validate: (value) => validateDecimalField(value, 'el precio de compra') })} inputMode="decimal" placeholder="6000" aria-invalid={Boolean(errors.purchasePrice)} aria-describedby="decimal-help purchase-price-error" required />
                 <FieldMessage id="purchase-price-error" message={errors.purchasePrice?.message} />
               </label>
-              <button type="button" className="secondary-button save-button" onClick={handleSaveSupply} disabled={isLoading}>{isSaving ? 'Guardando…' : selectedSupplyId ? 'Actualizar insumo guardado' : 'Guardar insumo'}</button>
+              <div className="catalog-actions">
+                <button type="button" className="secondary-button" onClick={handleSaveSupply} disabled={isLoading}>{isSaving ? 'Procesando…' : selectedSupplyId ? 'Guardar cambios' : 'Guardar insumo'}</button>
+                {selectedSupplyId && <button type="button" className="danger-button" onClick={handleDeleteSupply} disabled={isLoading || isSaving}>Eliminar insumo</button>}
+              </div>
               {saveMessage && <p className="save-message" role="status">{saveMessage}</p>}
             </fieldset>
             <fieldset>
@@ -177,6 +199,7 @@ export default function IngredientCalculator() {
               <label className="field" htmlFor="savedSupply">Cargar un insumo
                 <select id="savedSupply" value={selectedSupplyId} onChange={handleLoadSupply} disabled={isLoading || isSaving}><option value="">Nuevo insumo</option>{supplies.map((supply) => <option key={supply.id} value={supply.id}>{supply.name} · {decimal.format(supply.purchaseQuantity)} {supply.purchaseUnit}</option>)}</select>
               </label>
+              {selectedSupplyId && <p className="section-help catalog-help">Estás editando este insumo. Modificá sus datos y elegí «Guardar cambios».</p>}
               {isLoading && <p role="status">Cargando catálogo…</p>}
               {!isLoading && !catalogError && supplies.length === 0 && <p className="section-help catalog-help">Todavía no hay insumos guardados.</p>}
               {catalogError && <p className="field-error" role="alert">{catalogError}</p>}

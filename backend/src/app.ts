@@ -38,6 +38,19 @@ export function createApp(repository: SupplyRepository, recipes: RecipeRepositor
     response.json({ supply });
   }
 
+  /** Elimina un insumo sin uso; protege las recetas que todavía lo referencian. */
+  async function deleteSupply(request: Request, response: Response) {
+    const id = request.params.id;
+    if (typeof id !== 'string' || !/^[a-f\d]{24}$/i.test(id)) throw new InputError('El identificador del insumo no es válido.');
+    const referencedBy = (await recipes.list()).filter((recipe) => recipe.ingredients.some((ingredient) => ingredient.supplyId === id));
+    if (referencedBy.length > 0) {
+      response.status(409).json({ message: `No podés eliminar este insumo porque se usa en: ${referencedBy.map((recipe) => recipe.name).join(', ')}.` });
+      return;
+    }
+    if (!await repository.delete(id)) { response.status(404).json({ message: 'El insumo no existe.' }); return; }
+    response.status(204).end();
+  }
+
   /** Lista las recetas guardadas sin almacenar ni devolver costos históricos. */
   async function listRecipes(_request: Request, response: Response) {
     response.json({ recipes: await recipes.list() });
@@ -128,6 +141,7 @@ export function createApp(repository: SupplyRepository, recipes: RecipeRepositor
   app.get('/api/supplies', listSupplies);
   app.post('/api/supplies', createSupply);
   app.put('/api/supplies/:id', updateSupply);
+  app.delete('/api/supplies/:id', deleteSupply);
   app.get('/api/recipes', listRecipes);
   app.post('/api/recipes', createRecipe);
   app.put('/api/recipes/:id', updateRecipe);

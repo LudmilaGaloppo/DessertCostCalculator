@@ -7,6 +7,7 @@ export async function request<T>(path: string, options: RequestInit = {}): Promi
     if (options.signal?.aborted) throw error;
     throw new Error('No se pudo conectar con la API. Verificá que la API esté iniciada.');
   }
+  if (response.status === 204) return undefined as T;
   const data: unknown = await response.json().catch(emptyResponse);
   if (!response.ok) {
     const message = data && typeof data === 'object' && 'message' in data && typeof data.message === 'string'

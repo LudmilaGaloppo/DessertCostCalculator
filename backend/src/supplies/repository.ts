@@ -5,6 +5,7 @@ export interface SupplyRepository {
   list(): Promise<Supply[]>;
   create(input: SupplyInput): Promise<Supply>;
   update(id: string, input: SupplyInput): Promise<Supply | null>;
+  delete(id: string): Promise<boolean>;
 }
 
 const supplySchema = new Schema<SupplyInput>({
@@ -48,6 +49,10 @@ export function createSupplyRepository(connection: Connection): SupplyRepository
     async update(id, input) {
       const document = await SupplyModel.findByIdAndUpdate(id, { $set: input }, { returnDocument: 'after', runValidators: true }).lean().exec();
       return document ? toSupply(document) : null;
+    },
+    /** Elimina el insumo identificado y comunica si todavía existía. */
+    async delete(id) {
+      return (await SupplyModel.findByIdAndDelete(id).lean().exec()) !== null;
     },
   };
 }

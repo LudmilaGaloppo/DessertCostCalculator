@@ -22,6 +22,13 @@ test('la API valida JSON, crea insumos y distingue errores de entrada, ausencia 
     async create(value) { const supply = { ...value, id }; supplies.push(supply); return supply; },
     /** Simula un identificador válido que no está en el catálogo. */
     async update() { return null; },
+    /** Elimina el insumo simulado si está presente. */
+    async delete(supplyId) {
+      const index = supplies.findIndex((supply) => supply.id === supplyId);
+      if (index < 0) return false;
+      supplies.splice(index, 1);
+      return true;
+    },
   };
   const savedRecipes: Recipe[] = [];
   const recipeRepository: RecipeRepository = {
@@ -79,6 +86,9 @@ test('la API valida JSON, crea insumos y distingue errores de entrada, ausencia 
   assert.equal(recipeCreated.status, 201);
   assert.deepEqual(await recipeCreated.json(), { recipe: { ...recipeInput, id: recipeId } });
   assert.deepEqual(await (await fetch(recipesUrl)).json(), { recipes: [{ ...recipeInput, id: recipeId }] });
+  const referencedDelete = await fetch(`${url}/${id}`, { method: 'DELETE' });
+  assert.equal(referencedDelete.status, 409);
+  assert.match(((await referencedDelete.json()) as { message: string }).message, /Cookies/);
   assert.equal((await fetch(recipesUrl, { method: 'POST', headers, body: JSON.stringify({ ...recipeInput, ingredients: [{ ...recipeInput.ingredients[0], unit: 'ml' }] }) })).status, 400);
   const settingsUrl = `http://127.0.0.1:${address.port}/api/settings/costs`;
   assert.deepEqual(await (await fetch(settingsUrl)).json(), { settings: { hourlyRate: null, gasDailyAverage: null, electricityDailyAverage: null } });
@@ -95,6 +105,11 @@ test('la API valida JSON, crea insumos y distingue errores de entrada, ausencia 
   assert.deepEqual(await (await fetch(stickerUrl)).json(), { stickers: { name: 'Sticker', purchaseQuantity: 80, purchasePrice: 28000 } });
   assert.equal((await fetch(`${url}/invalid`, { method: 'PUT', headers, body: JSON.stringify(input) })).status, 400);
   assert.equal((await fetch(`${url}/${id}`, { method: 'PUT', headers, body: JSON.stringify(input) })).status, 404);
+  savedRecipes.length = 0;
+  assert.equal((await fetch(`${url}/${id}`, { method: 'DELETE' })).status, 204);
+  assert.deepEqual(await (await fetch(url)).json(), { supplies: [] });
+  assert.equal((await fetch(`${url}/${id}`, { method: 'DELETE' })).status, 404);
+  assert.equal((await fetch(`${url}/invalid`, { method: 'DELETE' })).status, 400);
   /** Simula la caída de MongoDB para verificar que no se filtren detalles internos. */
   repository.list = async function unavailable() { throw new Error('detalle interno privado'); };
   const unavailable = await fetch(url);
