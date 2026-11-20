@@ -15,7 +15,8 @@ Uso inicial: personal. Posible evolución: que otros emprendedores puedan utiliz
 - Modelos de insumo y receta propuestos por Ludmila y revisados. Se incorporaron unidad de uso, rendimiento y venta de cookies por unidad o en cajas con cantidad elegida al cotizar; ver [la devolución del modelo](docs/02-modelo-de-datos.md). Quedan detalles de costos y packaging por resolver.
 - Implementado el [cálculo de ingredientes de una receta](docs/04-calculo-de-receta.md): conversión de unidades, validación, desglose y subtotal. Nueve pruebas verificadas.
 - Primera pantalla local en React, TypeScript y Vite, con campos administrados por React Hook Form. El catálogo permite guardar, recuperar y actualizar insumos en MongoDB local mediante una API Express y Mongoose. Ver [MongoDB y formularios](docs/06-mongodb-y-formularios.md).
-- Compilación, 18 pruebas y una integración real con MongoDB verificadas. Página y API a través de Vite con respuesta HTTP 200; revisión visual e interactiva pendiente por un fallo del entorno de navegador.
+- La pantalla de recetas permite agregar o quitar ingredientes, definir el rendimiento, calcular el desglose y crear, recuperar o actualizar recetas en MongoDB. Los costos se recalculan con los precios vigentes del catálogo; ver [recetas persistidas](docs/08-recetas-persistidas.md).
+- Compilación, 21 pruebas y una integración real con MongoDB verificadas. La integración cubre la persistencia de insumos y recetas; la revisión visual e interactiva continúa pendiente por un fallo del entorno de navegador.
 - Frontend y backend separados en paquetes propios, conectados mediante npm workspaces. Los contratos de datos compartidos están en `shared/`; ver [la estructura del proyecto](docs/07-estructura-del-proyecto.md).
 - Desde esta carpeta: `npm ci` instala todos los paquetes, `npm run dev` inicia la web, `npm run typecheck` revisa tipos, `npm test` prueba ambas partes y `npm run example` ejecuta el ejemplo de consola. `npm run build` genera la web en `frontend/dist/` y la API en `backend/dist/`. Requiere Node.js 22 o posterior.
 - Para el catálogo, MongoDB debe estar activo y la API debe iniciarse en otra terminal con `npm run dev:api`. Conexión local predeterminada: `mongodb://127.0.0.1:27017/dessert_cost_calculator`; `backend/.env.example` permite configurarla mediante `backend/.env`. `npm run test:integration` comprueba persistencia en una base temporal propia.
@@ -29,6 +30,7 @@ Uso inicial: personal. Posible evolución: que otros emprendedores puedan utiliz
 5. Abrir [la primera pantalla y su recorrido de datos](docs/05-primera-pantalla.md).
 6. Revisar [MongoDB local y React Hook Form](docs/06-mongodb-y-formularios.md).
 7. Consultar [la separación de frontend, backend y tipos compartidos](docs/07-estructura-del-proyecto.md).
+8. Revisar [el formulario dinámico y la persistencia de recetas](docs/08-recetas-persistidas.md).
 
 Referencia de apoyo: [Git y GitHub Desktop, guía rápida](docs/git-y-github-desktop.md).
 
