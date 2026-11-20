@@ -11,7 +11,7 @@ export const exampleIngredientForm: IngredientFormValues = {
 };
 
 /** Convierte un campo decimal con coma o punto; rechaza vacíos y formatos ambiguos antes del cálculo. */
-function parseDecimal(value: string, label: string): number {
+export function parseDecimal(value: string, label: string): number {
   const text = value.trim();
   if (text === '') throw new Error(`Completá ${label}.`);
   if (!/^-?(?:\d+(?:[.,]\d*)?|[.,]\d+)$/.test(text)) {
@@ -23,7 +23,7 @@ function parseDecimal(value: string, label: string): number {
 }
 
 /** Comprueba la unidad recibida desde el formulario y la devuelve con el tipo Unit. */
-function parseUnit(value: string): Unit {
+export function parseUnit(value: string): Unit {
   switch (value) {
     case 'g': case 'kg': case 'ml': case 'l': case 'unit': return value;
     default: throw new Error('Elegí una unidad válida.');

@@ -66,8 +66,13 @@ legend { padding: 0 12px 0 0; font-weight: 650; font-size: 1rem; }
 .field-error { color: #81222e; font-size: .9rem; line-height: 1.5; font-weight: 400; }
 .save-button { margin-top: 18px; width: 100%; }
 .save-message { color: #256245; line-height: 1.5; margin-bottom: 0; }
-button:disabled { opacity: .55; cursor: wait; }
+button:disabled { opacity: .55; cursor: not-allowed; }
 input[aria-invalid="true"] { border-color: #a03243; }
+.page-nav { display: flex; gap: 8px; }
+.page-nav button { border: 0; background: transparent; border-radius: 8px; padding: 10px 14px; color: #574d5d; }
+.page-nav button[aria-pressed="true"] { background: #f4e8ed; color: #743649; font-weight: 600; }
+.ingredient-row { border: 1px solid #e4e0e6; border-radius: 10px; padding: 16px; margin: 0 0 20px; }
+select[aria-invalid="true"] { border-color: #a03243; }
 @media (max-width: 780px) {
   .topbar { height: 74px; padding: 0 22px; }
   .topbar-label { display: none; }
@@ -75,6 +80,10 @@ input[aria-invalid="true"] { border-color: #a03243; }
   .calculator-layout { grid-template-columns: 1fr; gap: 22px; }
   .form-card { padding: 24px; }
   .result-card { min-height: auto; padding: 28px; }
+}
+@media (max-width: 520px) {
+  .topbar { height: auto; min-height: 74px; flex-wrap: wrap; padding-top: 14px; padding-bottom: 14px; gap: 12px; }
+  .form-actions { flex-wrap: wrap; }
 }
 @media (max-width: 420px) {
   main { padding-left: 14px; padding-right: 14px; }

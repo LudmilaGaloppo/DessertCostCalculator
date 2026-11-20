@@ -5,14 +5,15 @@ import { once } from 'node:events';
 import mongoose from 'mongoose';
 import { createApp } from '../../src/app.js';
 import { createSupplyRepository } from '../../src/supplies/repository.js';
-import type { Supply } from '@dessert-cost/shared';
+import { createRecipeRepository } from '../../src/recipes/repository.js';
+import type { Recipe, Supply } from '@dessert-cost/shared';
 
 test('MongoDB local persiste insumos, permite releerlos desde otra conexión y actualiza por ID', async (context) => {
   const uri = process.env.MONGODB_URI ?? 'mongodb://127.0.0.1:27017/dessert_cost_calculator';
   // dbName reemplaza la base de la URI: nunca se escribe en el catálogo de la usuaria.
   const dbName = `dessert_cost_test_${randomUUID().replaceAll('-', '')}`;
   const connection = await mongoose.createConnection(uri, { dbName, serverSelectionTimeoutMS: 5000 }).asPromise();
-  const server = createApp(createSupplyRepository(connection)).listen(0, '127.0.0.1');
+  const server = createApp(createSupplyRepository(connection), createRecipeRepository(connection)).listen(0, '127.0.0.1');
   context.after(async () => {
     server.closeAllConnections();
     server.close();
@@ -44,6 +45,17 @@ test('MongoDB local persiste insumos, permite releerlos desde otra conexión y a
   assert.equal(saved.supplies.length, 1);
   assert.equal(saved.supplies[0].id, supply.id);
   assert.equal(saved.supplies[0].purchasePrice, 8000);
+  const recipesUrl = `http://127.0.0.1:${address.port}/api/recipes`;
+  const recipeInput = { name: 'Cookies de prueba', yieldQuantity: 12, yieldUnit: 'unit', ingredients: [{ supplyId: supply.id, quantity: 375, unit: 'g' }] };
+  const recipeResponse = await fetch(recipesUrl, { method: 'POST', headers, body: JSON.stringify(recipeInput) });
+  assert.equal(recipeResponse.status, 201);
+  const { recipe } = await recipeResponse.json() as { recipe: Recipe };
+  assert.match(recipe.id, /^[a-f0-9]{24}$/);
+  assert.deepEqual((await (await fetch(recipesUrl)).json() as { recipes: Recipe[] }).recipes, [recipe]);
+  const updatedRecipeResponse = await fetch(`${recipesUrl}/${recipe.id}`, { method: 'PUT', headers, body: JSON.stringify({ ...recipeInput, yieldQuantity: 15 }) });
+  assert.equal(updatedRecipeResponse.status, 200);
+  assert.equal(((await updatedRecipeResponse.json()) as { recipe: Recipe }).recipe.yieldQuantity, 15);
   assert.equal((await fetch(url, { method: 'POST', headers, body: JSON.stringify({ ...input, purchaseQuantity: 0 }) })).status, 400);
   assert.equal(await connection.collection('supplies').countDocuments(), 1);
+  assert.equal(await connection.collection('recipes').countDocuments(), 1);
 });

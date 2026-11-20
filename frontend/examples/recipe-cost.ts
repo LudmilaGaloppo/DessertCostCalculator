@@ -10,6 +10,8 @@ const supplies: Supply[] = [
 const recipe: Recipe = {
   id: 'cookies-demo',
   name: 'Cookies de ejemplo',
+  yieldQuantity: 12,
+  yieldUnit: 'unit',
   ingredients: [
     { supplyId: 'flour', quantity: 375, unit: 'g' },
     { supplyId: 'sugar', quantity: 150, unit: 'g' },

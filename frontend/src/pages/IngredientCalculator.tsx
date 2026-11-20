@@ -120,10 +120,6 @@ export default function IngredientCalculator() {
 
   return (
     <>
-      <header className="topbar">
-        <a className="brand" href="#main"><span className="brand-mark" aria-hidden="true">dc</span><span>Desserts Cost</span></a>
-        <span className="topbar-label">Tu cocina, en números</span>
-      </header>
       <main id="main">
         <div className="page-heading">
           <p className="eyebrow">CALCULADORA DE INSUMOS</p>

@@ -21,11 +21,17 @@ export interface RecipeIngredient {
   unit: Unit;
 }
 
-// Parte de la receta necesaria para el cálculo de ingredientes actual.
-export interface Recipe {
-  id: string;
+// Datos editables: el rendimiento describe lo que produce una tanda.
+export interface RecipeInput {
   name: string;
+  yieldQuantity: number;
+  yieldUnit: Unit;
   ingredients: readonly RecipeIngredient[];
+}
+
+// Receta persistida; sus costos se calculan con el catálogo vigente.
+export interface Recipe extends RecipeInput {
+  id: string;
 }
 
 export interface IngredientCost extends RecipeIngredient {
