@@ -32,7 +32,7 @@ Las rutas incorporadas son:
 - `POST /api/recipes`
 - `PUT /api/recipes/:id`
 
-El subtotal mostrado incluye solamente ingredientes. Mano de obra, energía, envases y precio de venta pertenecen al próximo bloque.
+El bloque siguiente incorporó [mano de obra y costo parcial de producción](09-mano-de-obra.md). Energía, envases y precio de venta siguen pendientes.
 
 ## Cómo probarlo
 

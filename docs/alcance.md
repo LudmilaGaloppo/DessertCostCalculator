@@ -71,10 +71,10 @@ Poder recuperar insumos y recetas al volver a usar la aplicación. La forma de a
 | Moneda | Propuesta inicial: pesos argentinos; confirmar cómo mostrar moneda y decimales |
 | Nuevas compras | Cómo actualizar costos cuando cambia el precio de un insumo y qué conservar de cálculos anteriores |
 | Energía | Método sencillo y explícito para estimar el costo de horno y hornallas |
-| Trabajo | Valor de la hora y qué tiempos se atribuyen a cada receta |
+| Trabajo | Tarifa general y horas por receta implementadas; falta definir la regla personal para atribuir tiempos |
 | Gastos generales | Cómo repartirlos sin duplicar gastos ya incluidos |
 | Venta | Cómo representar envases, comisiones y otros gastos por presentación o canal cuando correspondan |
-| Almacenamiento | MongoDB local elegido e integrado para insumos; quedan recetas, presupuestos y estrategia de respaldo |
+| Almacenamiento | MongoDB local integrado para insumos, recetas y configuración; quedan presupuestos y estrategia de respaldo |
 | Redondeo | Precisión de cálculo y tratamiento del precio elegido para vender |
 
 ## Posibles ampliaciones
