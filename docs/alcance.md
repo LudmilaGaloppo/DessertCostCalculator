@@ -47,6 +47,8 @@ Distinguir explícitamente:
 
 El 15 % fue un ejemplo. Los porcentajes serán configurables; todavía no existe un porcentaje recomendado para este emprendimiento. Hablar de ganancia estimada según los costos incluidos, sin presentar un subtotal de ingredientes como si fuera el costo completo.
 
+Implementado en [la simulación de precio de venta](12-precio-de-venta.md): porcentaje con base explícita y precio manual con ganancia o pérdida. Venta directa sin comisiones, sin redondeo automático a múltiplos y con dos decimales de presentación. La simulación se mantiene en pantalla y todavía no se guarda como presupuesto.
+
 ### 6. Guardado
 
 Poder recuperar insumos y recetas al volver a usar la aplicación. La forma de almacenamiento se elegirá cuando trabajemos esa etapa. Debemos explicar sus límites y cómo respaldar los datos.
@@ -60,7 +62,7 @@ Poder recuperar insumos y recetas al volver a usar la aplicación. La forma de a
 - Rechazar cantidades y precios negativos; definir cómo distinguir un precio cero válido de un dato faltante.
 - No convertir números inválidos o campos vacíos silenciosamente en costos cero.
 - Usar el rendimiento vendible: los recortes descartados no deben contarse como producto vendido.
-- Definir precisión y redondeo; distinguir el precio calculado del precio comercial finalmente elegido.
+- Conservar la precisión del cálculo y mostrar moneda con dos decimales, sin redondear a múltiplos; evaluar el precio comercial elegido mediante el campo manual.
 - Mostrar pérdidas si el precio elegido no alcanza a cubrir los costos contemplados.
 
 ## Decisiones pendientes
@@ -73,9 +75,9 @@ Poder recuperar insumos y recetas al volver a usar la aplicación. La forma de a
 | Energía | Prorrateo simple por promedio diario implementado; se puede reemplazar por consumo técnico si se busca más precisión |
 | Trabajo | Tarifa general y horas por receta implementadas; falta definir la regla personal para atribuir tiempos |
 | Gastos generales | Cómo repartirlos sin duplicar gastos ya incluidos |
-| Venta | Packaging por unidad y caja implementado; quedan comisiones y otros gastos por canal |
+| Venta | Packaging y simulación de precios implementados para venta directa sin comisiones; revisar otros canales cuando se utilicen |
 | Almacenamiento | MongoDB local integrado para insumos, recetas y configuración; quedan presupuestos y estrategia de respaldo |
-| Redondeo | Precisión de cálculo y tratamiento del precio elegido para vender |
+| Redondeo | Acordado: sin ajuste automático a múltiplos; el precio comercial se ingresa a criterio propio |
 
 ## Posibles ampliaciones
 

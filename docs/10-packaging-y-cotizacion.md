@@ -32,7 +32,7 @@ Para la caja, el packaging actual cuesta $1.550: $1.200 de caja más $350 de sti
 
 ## Alcance del resultado
 
-La pantalla muestra un costo, no un precio de venta. Incluye la [energía estimada de la receta](11-energia-estimada.md). Si faltan horas, tarifas, tiempos, promedios diarios o precio de stickers, conserva los importes conocidos y marca el resultado como parcial.
+El desglose muestra el costo e incluye la [energía estimada de la receta](11-energia-estimada.md). Debajo permite [simular precios de venta](12-precio-de-venta.md) por porcentaje o evaluar un precio manual. Si faltan horas, tarifas, tiempos, promedios diarios o precio de stickers, conserva los importes conocidos, marca el costo como parcial y los precios y ganancias como provisorios.
 
 Las nuevas rutas son:
 

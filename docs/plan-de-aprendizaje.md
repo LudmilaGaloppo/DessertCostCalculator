@@ -40,7 +40,7 @@ Resultado: reutilizar un insumo en distintas recetas y explicar de dónde sale c
 
 ## Etapa 5. Elaboración, presentaciones y precios
 
-Implementados [mano de obra](09-mano-de-obra.md), [energía estimada](11-energia-estimada.md) y [packaging con costo por cantidad vendida](10-packaging-y-cotizacion.md). Cada receta guarda tiempos de trabajo y artefactos; la configuración conserva tarifa y promedios diarios; el catálogo conserva envases y stickers. Los resultados distinguen datos pendientes de costos cero. La simulación del precio de venta sigue pendiente.
+Implementados [mano de obra](09-mano-de-obra.md), [energía estimada](11-energia-estimada.md), [packaging con costo por cantidad vendida](10-packaging-y-cotizacion.md) y [simulación de precios de venta](12-precio-de-venta.md). Cada receta guarda tiempos de trabajo y artefactos; la configuración conserva tarifa y promedios diarios; el catálogo conserva envases y stickers. Los resultados distinguen datos pendientes de costos cero. La simulación sugiere un precio por recargo o margen y permite evaluar un precio manual con su ganancia o pérdida, sin redondeo a múltiplos ni comisiones. Guardar presupuestos sigue pendiente. Implementado no equivale a comprensión comprobada.
 
 Agregar trabajo, energía, rendimiento vendible, envases y otros gastos acordados. Calcular por peso, piezas y producto completo. Comparar recargo y margen sin fijar un porcentaje universal.
 
