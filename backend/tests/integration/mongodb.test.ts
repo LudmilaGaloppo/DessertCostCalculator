@@ -7,6 +7,8 @@ import { createApp } from '../../src/app.js';
 import { createSupplyRepository } from '../../src/supplies/repository.js';
 import { createRecipeRepository } from '../../src/recipes/repository.js';
 import { createCostSettingsRepository } from '../../src/settings/repository.js';
+import { createPackagingRepository } from '../../src/packaging/repository.js';
+import { createStickerSettingsRepository } from '../../src/packaging/sticker-settings.js';
 import type { Recipe, Supply } from '@dessert-cost/shared';
 
 test('MongoDB local persiste insumos, permite releerlos desde otra conexión y actualiza por ID', async (context) => {
@@ -14,7 +16,7 @@ test('MongoDB local persiste insumos, permite releerlos desde otra conexión y a
   // dbName reemplaza la base de la URI: nunca se escribe en el catálogo de la usuaria.
   const dbName = `dessert_cost_test_${randomUUID().replaceAll('-', '')}`;
   const connection = await mongoose.createConnection(uri, { dbName, serverSelectionTimeoutMS: 5000 }).asPromise();
-  const server = createApp(createSupplyRepository(connection), createRecipeRepository(connection), createCostSettingsRepository(connection)).listen(0, '127.0.0.1');
+  const server = createApp(createSupplyRepository(connection), createRecipeRepository(connection), createCostSettingsRepository(connection), createPackagingRepository(connection), createStickerSettingsRepository(connection)).listen(0, '127.0.0.1');
   context.after(async () => {
     server.closeAllConnections();
     server.close();
@@ -60,8 +62,17 @@ test('MongoDB local persiste insumos, permite releerlos desde otra conexión y a
   assert.deepEqual(await (await fetch(settingsUrl)).json(), { settings: { hourlyRate: null } });
   assert.equal((await fetch(settingsUrl, { method: 'PUT', headers, body: JSON.stringify({ hourlyRate: 5000 }) })).status, 200);
   assert.deepEqual(await (await fetch(settingsUrl)).json(), { settings: { hourlyRate: 5000 } });
+  const packagingUrl = `http://127.0.0.1:${address.port}/api/packaging`;
+  const boxInput = { name: 'Caja de prueba', kind: 'box', purchaseQuantity: 4, purchasePrice: 4800, capacity: 12, capacityUnit: 'unit', stickersPerPackage: 1 };
+  assert.equal((await fetch(packagingUrl, { method: 'POST', headers, body: JSON.stringify(boxInput) })).status, 201);
+  assert.equal((await (await fetch(packagingUrl)).json() as { packaging: unknown[] }).packaging.length, 1);
+  const stickerUrl = `http://127.0.0.1:${address.port}/api/settings/stickers`;
+  assert.equal((await fetch(stickerUrl, { method: 'PUT', headers, body: JSON.stringify({ name: 'Sticker de prueba', purchaseQuantity: 80, purchasePrice: 28000 }) })).status, 200);
+  assert.deepEqual(await (await fetch(stickerUrl)).json(), { stickers: { name: 'Sticker de prueba', purchaseQuantity: 80, purchasePrice: 28000 } });
   assert.equal((await fetch(url, { method: 'POST', headers, body: JSON.stringify({ ...input, purchaseQuantity: 0 }) })).status, 400);
   assert.equal(await connection.collection('supplies').countDocuments(), 1);
   assert.equal(await connection.collection('recipes').countDocuments(), 1);
   assert.equal(await connection.collection('settings').countDocuments(), 1);
+  assert.equal(await connection.collection('packaging').countDocuments(), 1);
+  assert.equal(await connection.collection('sticker_settings').countDocuments(), 1);
 });

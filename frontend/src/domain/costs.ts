@@ -4,7 +4,7 @@
 // ingredient.supplyId referencia supply.id; el precio se obtiene del insumo.
 // Ejemplo y explicación: ../../../docs/04-calculo-de-receta.md
 
-import type { Unit, Supply, RecipeIngredient, RecipeIngredientsCost, RecipeInput, CostSettings, ProductionCost } from '@dessert-cost/shared';
+import type { Unit, Supply, RecipeIngredient, RecipeIngredientsCost, RecipeInput, CostSettings, ProductionCost, Packaging, SaleQuoteCost, StickerSettings } from '@dessert-cost/shared';
 
 interface UnitDefinition {
   dimension: 'mass' | 'volume' | 'count';
@@ -121,4 +121,40 @@ export function calculateProductionCost(recipe: RecipeInput, supplies: readonly 
     productionSubtotal: ingredientCost.ingredientsSubtotal + (laborCost ?? 0),
     missingInputs,
   };
+}
+
+/** Distribuye el costo de la tanda y suma el envase requerido por la presentación elegida. */
+export function calculateSaleQuoteCost(recipe: RecipeInput, production: ProductionCost, packaging: Packaging, stickers: StickerSettings, requestedUnits: number): SaleQuoteCost {
+  requireNumber(requestedUnits, 'La cantidad solicitada', true);
+  if (!Number.isInteger(requestedUnits)) throw new RangeError('La cantidad de cookies debe ser un número entero.');
+  if (recipe.yieldUnit !== 'unit') throw new RangeError('La receta debe tener rendimiento expresado en unidades.');
+  requireNumber(recipe.yieldQuantity, 'El rendimiento', true);
+  requireNumber(packaging.purchaseQuantity, 'La cantidad de envases comprada', true);
+  requireNumber(packaging.purchasePrice, 'El precio de los envases');
+  requireNumber(packaging.capacity, 'La capacidad del envase', true);
+  if (packaging.capacityUnit !== 'unit') throw new RangeError('La capacidad del envase debe estar expresada en unidades.');
+  if (packaging.kind === 'box' && requestedUnits > packaging.capacity) {
+    throw new RangeError(`Esta caja admite hasta ${packaging.capacity} cookies. Elegí otra presentación.`);
+  }
+  if (packaging.kind === 'individual' && packaging.capacity !== 1) throw new RangeError('Un envase individual debe tener capacidad para una unidad.');
+  if (packaging.kind !== 'box' && packaging.kind !== 'individual') throw new RangeError('El tipo de envase no es válido.');
+  const packageCount = packaging.kind === 'individual' ? requestedUnits : 1;
+  const unitProductionCost = production.productionSubtotal / recipe.yieldQuantity;
+  const productsCost = unitProductionCost * requestedUnits;
+  const unitPackagingCost = packaging.purchasePrice / packaging.purchaseQuantity;
+  const containersCost = unitPackagingCost * packageCount;
+  const stickerCount = packageCount * packaging.stickersPerPackage;
+  const missingInputs = [...production.missingInputs];
+  let stickerCost: number | null = null;
+  if (stickerCount === 0) stickerCost = 0;
+  else if (stickers.purchaseQuantity === null || stickers.purchasePrice === null) missingInputs.push('precio de los stickers');
+  else {
+    requireNumber(stickers.purchaseQuantity, 'La cantidad de stickers comprada', true);
+    requireNumber(stickers.purchasePrice, 'El precio de los stickers');
+    stickerCost = stickerCount * stickers.purchasePrice / stickers.purchaseQuantity;
+  }
+  const packagingCost = containersCost + (stickerCost ?? 0);
+  const quotedCost = productsCost + packagingCost;
+  for (const [label, value] of Object.entries({ unitProductionCost, productsCost, unitPackagingCost, containersCost, packagingCost, quotedCost })) requireNumber(value, label);
+  return { requestedUnits, packageCount, unitProductionCost, productsCost, unitPackagingCost, containersCost, stickerCount, stickerCost, packagingCost, quotedCost, isPartial: missingInputs.length > 0, missingInputs };
 }

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { convertQuantity, calculateIngredientCost, calculateProductionCost, calculateRecipeIngredients } from '../src/domain/costs.js';
-import type { RecipeInput, Supply, RecipeIngredient, Unit } from '@dessert-cost/shared';
+import { convertQuantity, calculateIngredientCost, calculateProductionCost, calculateRecipeIngredients, calculateSaleQuoteCost } from '../src/domain/costs.js';
+import type { Packaging, RecipeInput, Supply, RecipeIngredient, Unit } from '@dessert-cost/shared';
 
 const flour: Supply = Object.freeze({ id: 'flour', name: 'Harina', purchaseQuantity: 2.5, purchaseUnit: 'kg', purchasePrice: 6000 });
 const ingredient: RecipeIngredient = Object.freeze({ supplyId: 'flour', quantity: 375, unit: 'g' });
@@ -95,4 +95,30 @@ test('mantiene el costo parcial cuando faltan horas o tarifa', () => {
   assert.equal(result.laborCost, null);
   assert.equal(result.productionSubtotal, 900);
   assert.deepEqual(result.missingInputs, ['valor de la hora']);
+});
+
+test('cotiza una caja con un único sticker y rechaza superar su capacidad', () => {
+  const recipe: RecipeInput = { name: 'Cookies', yieldQuantity: 12, yieldUnit: 'unit', workingHours: 3, ingredients: [ingredient] };
+  const production = calculateProductionCost(recipe, [flour], { hourlyRate: 5000 });
+  const box: Packaging = { id: 'box', name: 'Caja', kind: 'box', purchaseQuantity: 4, purchasePrice: 4800, capacity: 12, capacityUnit: 'unit', stickersPerPackage: 1 };
+  const result = calculateSaleQuoteCost(recipe, production, box, { name: 'Sticker', purchaseQuantity: 80, purchasePrice: 28000 }, 5);
+  assert.equal(result.productsCost, 6625);
+  assert.equal(result.containersCost, 1200);
+  assert.equal(result.stickerCount, 1);
+  assert.equal(result.stickerCost, 350);
+  assert.equal(result.quotedCost, 8175);
+  assert.throws(() => calculateSaleQuoteCost(recipe, production, box, { name: 'Sticker', purchaseQuantity: 80, purchasePrice: 28000 }, 13), /hasta 12/);
+});
+
+test('cotiza una bolsa y un sticker por cada cookie individual', () => {
+  const recipe: RecipeInput = { name: 'Cookies', yieldQuantity: 12, yieldUnit: 'unit', workingHours: 3, ingredients: [ingredient] };
+  const production = calculateProductionCost(recipe, [flour], { hourlyRate: 5000 });
+  const bag: Packaging = { id: 'bag', name: 'Bolsa', kind: 'individual', purchaseQuantity: 100, purchasePrice: 1700, capacity: 1, capacityUnit: 'unit', stickersPerPackage: 1 };
+  const result = calculateSaleQuoteCost(recipe, production, bag, { name: 'Sticker', purchaseQuantity: 80, purchasePrice: 28000 }, 5);
+  assert.equal(result.packageCount, 5);
+  assert.equal(result.containersCost, 85);
+  assert.equal(result.stickerCount, 5);
+  assert.equal(result.stickerCost, 1750);
+  assert.equal(result.packagingCost, 1835);
+  assert.equal(result.quotedCost, 8460);
 });

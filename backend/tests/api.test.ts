@@ -5,7 +5,9 @@ import { createApp } from '../src/app.js';
 import type { SupplyRepository } from '../src/supplies/repository.js';
 import type { RecipeRepository } from '../src/recipes/repository.js';
 import type { CostSettingsRepository } from '../src/settings/repository.js';
-import type { Recipe, Supply } from '@dessert-cost/shared';
+import type { PackagingRepository } from '../src/packaging/repository.js';
+import type { StickerSettingsRepository } from '../src/packaging/sticker-settings.js';
+import type { Packaging, Recipe, StickerSettings, Supply } from '@dessert-cost/shared';
 
 const id = '507f1f77bcf86cd799439011';
 const recipeId = '507f1f77bcf86cd799439012';
@@ -37,7 +39,23 @@ test('la API valida JSON, crea insumos y distingue errores de entrada, ausencia 
     /** Conserva la tarifa para verificar lectura y actualización por HTTP. */
     async update(value) { hourlyRate = value; return { hourlyRate }; },
   };
-  const server = createApp(repository, recipeRepository, settingsRepository).listen(0, '127.0.0.1');
+  const savedPackaging: Packaging[] = [];
+  const packagingRepository: PackagingRepository = {
+    /** Devuelve los envases creados durante la prueba HTTP. */
+    async list() { return savedPackaging; },
+    /** Conserva un envase nuevo con un identificador simulado. */
+    async create(value) { const saved = { ...value, id: recipeId }; savedPackaging.push(saved); return saved; },
+    /** Simula un envase que ya no existe al intentar actualizarlo. */
+    async update() { return null; },
+  };
+  let stickerSettings: StickerSettings = { name: null, purchaseQuantity: null, purchasePrice: null };
+  const stickerRepository: StickerSettingsRepository = {
+    /** Devuelve la compra de stickers simulada. */
+    async get() { return stickerSettings; },
+    /** Conserva la configuración recibida para la siguiente lectura. */
+    async update(value) { stickerSettings = value; return stickerSettings; },
+  };
+  const server = createApp(repository, recipeRepository, settingsRepository, packagingRepository, stickerRepository).listen(0, '127.0.0.1');
   await once(server, 'listening');
   context.after(() => { server.closeAllConnections(); server.close(); });
   const address = server.address();
@@ -62,6 +80,14 @@ test('la API valida JSON, crea insumos y distingue errores de entrada, ausencia 
   assert.deepEqual(await (await fetch(settingsUrl)).json(), { settings: { hourlyRate: null } });
   assert.equal((await fetch(settingsUrl, { method: 'PUT', headers, body: JSON.stringify({ hourlyRate: 0 }) })).status, 400);
   assert.deepEqual(await (await fetch(settingsUrl, { method: 'PUT', headers, body: JSON.stringify({ hourlyRate: 5000 }) })).json(), { settings: { hourlyRate: 5000 } });
+  const packagingUrl = `http://127.0.0.1:${address.port}/api/packaging`;
+  const boxInput = { name: 'Caja', kind: 'box', purchaseQuantity: 4, purchasePrice: 4800, capacity: 12, capacityUnit: 'unit', stickersPerPackage: 1 };
+  assert.equal((await fetch(packagingUrl, { method: 'POST', headers, body: JSON.stringify({ ...boxInput, capacity: 0 }) })).status, 400);
+  assert.equal((await fetch(packagingUrl, { method: 'POST', headers, body: JSON.stringify(boxInput) })).status, 201);
+  assert.equal((await (await fetch(packagingUrl)).json() as { packaging: Packaging[] }).packaging.length, 1);
+  const stickerUrl = `http://127.0.0.1:${address.port}/api/settings/stickers`;
+  assert.equal((await fetch(stickerUrl, { method: 'PUT', headers, body: JSON.stringify({ name: 'Sticker', purchaseQuantity: 80, purchasePrice: 28000 }) })).status, 200);
+  assert.deepEqual(await (await fetch(stickerUrl)).json(), { stickers: { name: 'Sticker', purchaseQuantity: 80, purchasePrice: 28000 } });
   assert.equal((await fetch(`${url}/invalid`, { method: 'PUT', headers, body: JSON.stringify(input) })).status, 400);
   assert.equal((await fetch(`${url}/${id}`, { method: 'PUT', headers, body: JSON.stringify(input) })).status, 404);
   /** Simula la caída de MongoDB para verificar que no se filtren detalles internos. */

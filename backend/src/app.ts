@@ -5,9 +5,13 @@ import type { RecipeRepository } from './recipes/repository.js';
 import { validateRecipeInput } from './recipes/validation.js';
 import type { CostSettingsRepository } from './settings/repository.js';
 import { validateHourlyRate } from './settings/validation.js';
+import type { PackagingRepository } from './packaging/repository.js';
+import { validatePackagingInput } from './packaging/validation.js';
+import type { StickerSettingsRepository } from './packaging/sticker-settings.js';
+import { validateStickerSettings } from './packaging/sticker-settings.js';
 
 /** Crea la API local de insumos y recetas con repositorios reemplazables para las pruebas. */
-export function createApp(repository: SupplyRepository, recipes: RecipeRepository, settings: CostSettingsRepository) {
+export function createApp(repository: SupplyRepository, recipes: RecipeRepository, settings: CostSettingsRepository, packaging: PackagingRepository, stickers: StickerSettingsRepository) {
   const app = express();
   app.disable('x-powered-by');
   app.use(express.json({ limit: '16kb' }));
@@ -68,6 +72,38 @@ export function createApp(repository: SupplyRepository, recipes: RecipeRepositor
     response.json({ settings: await settings.update(validateHourlyRate(request.body)) });
   }
 
+  /** Devuelve el catálogo de envases disponibles para cotizar. */
+  async function listPackaging(_request: Request, response: Response) {
+    response.json({ packaging: await packaging.list() });
+  }
+
+  /** Valida y crea un envase sin aceptar identificadores del cliente. */
+  async function createPackaging(request: Request, response: Response) {
+    if (!request.is('application/json')) { response.status(415).json({ message: 'Enviá JSON.' }); return; }
+    response.status(201).json({ packaging: await packaging.create(validatePackagingInput(request.body)) });
+  }
+
+  /** Valida y actualiza un envase existente. */
+  async function updatePackaging(request: Request, response: Response) {
+    if (!request.is('application/json')) { response.status(415).json({ message: 'Enviá JSON.' }); return; }
+    const id = request.params.id;
+    if (typeof id !== 'string' || !/^[a-f\d]{24}$/i.test(id)) throw new InputError('El identificador del envase no es válido.');
+    const saved = await packaging.update(id, validatePackagingInput(request.body));
+    if (!saved) { response.status(404).json({ message: 'El envase no existe.' }); return; }
+    response.json({ packaging: saved });
+  }
+
+  /** Devuelve la compra de stickers compartida por bolsas y cajas. */
+  async function getStickerSettings(_request: Request, response: Response) {
+    response.json({ stickers: await stickers.get() });
+  }
+
+  /** Valida y guarda la compra usada para calcular el costo unitario del sticker. */
+  async function updateStickerSettings(request: Request, response: Response) {
+    if (!request.is('application/json')) { response.status(415).json({ message: 'Enviá JSON.' }); return; }
+    response.json({ stickers: await stickers.update(validateStickerSettings(request.body)) });
+  }
+
   /** Informa que la ruta solicitada no pertenece a esta API. */
   function notFound(_request: Request, response: Response) {
     response.status(404).json({ message: 'Ruta no encontrada.' });
@@ -90,6 +126,11 @@ export function createApp(repository: SupplyRepository, recipes: RecipeRepositor
   app.put('/api/recipes/:id', updateRecipe);
   app.get('/api/settings/costs', getCostSettings);
   app.put('/api/settings/costs', updateCostSettings);
+  app.get('/api/packaging', listPackaging);
+  app.post('/api/packaging', createPackaging);
+  app.put('/api/packaging/:id', updatePackaging);
+  app.get('/api/settings/stickers', getStickerSettings);
+  app.put('/api/settings/stickers', updateStickerSettings);
   app.use(notFound);
   app.use(handleError);
   return app;

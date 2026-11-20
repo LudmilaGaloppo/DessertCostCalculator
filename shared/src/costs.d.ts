@@ -56,3 +56,44 @@ export interface ProductionCost extends RecipeIngredientsCost {
   productionSubtotal: number;
   missingInputs: string[];
 }
+
+export type PackagingKind = 'individual' | 'box';
+
+// Datos de compra y capacidad de un envase; el servidor asigna su identificador.
+export interface PackagingInput {
+  name: string;
+  kind: PackagingKind;
+  purchaseQuantity: number;
+  purchasePrice: number;
+  capacity: number;
+  capacityUnit: Unit;
+  stickersPerPackage: number;
+}
+
+// Envase persistido y reutilizable en distintas cotizaciones.
+export interface Packaging extends PackagingInput {
+  id: string;
+}
+
+// Compra de stickers compartida por todas las presentaciones que los utilizan.
+export interface StickerSettings {
+  name: string | null;
+  purchaseQuantity: number | null;
+  purchasePrice: number | null;
+}
+
+// Costo de una cantidad vendida con el envase elegido, sin convertirlo en precio de venta.
+export interface SaleQuoteCost {
+  requestedUnits: number;
+  packageCount: number;
+  unitProductionCost: number;
+  productsCost: number;
+  unitPackagingCost: number;
+  containersCost: number;
+  stickerCount: number;
+  stickerCost: number | null;
+  packagingCost: number;
+  quotedCost: number;
+  isPartial: boolean;
+  missingInputs: string[];
+}
