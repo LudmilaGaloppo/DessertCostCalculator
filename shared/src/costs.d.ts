@@ -104,3 +104,14 @@ export interface SaleQuoteCost {
   isPartial: boolean;
   missingInputs: string[];
 }
+
+// El porcentaje puede aplicarse sobre el costo o sobre el precio de venta.
+export type PricingBasis = 'markup' | 'margin';
+
+// Diferencia respecto de los costos contemplados; null indica una base igual a cero.
+export interface SaleProfit {
+  salePrice: number;
+  profit: number;
+  markupPercentage: number | null;
+  marginPercentage: number | null;
+}

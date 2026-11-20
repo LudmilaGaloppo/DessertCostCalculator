@@ -4,7 +4,7 @@
 // ingredient.supplyId referencia supply.id; el precio se obtiene del insumo.
 // Ejemplo y explicación: ../../../docs/04-calculo-de-receta.md
 
-import type { Unit, Supply, RecipeIngredient, RecipeIngredientsCost, RecipeInput, CostSettings, ProductionCost, Packaging, SaleQuoteCost, StickerSettings } from '@dessert-cost/shared';
+import type { Unit, Supply, RecipeIngredient, RecipeIngredientsCost, RecipeInput, CostSettings, ProductionCost, Packaging, SaleQuoteCost, StickerSettings, PricingBasis, SaleProfit } from '@dessert-cost/shared';
 
 interface UnitDefinition {
   dimension: 'mass' | 'volume' | 'count';
@@ -181,4 +181,28 @@ export function calculateSaleQuoteCost(recipe: RecipeInput, production: Producti
   const quotedCost = productsCost + packagingCost;
   for (const [label, value] of Object.entries({ unitProductionCost, productsCost, unitPackagingCost, containersCost, packagingCost, quotedCost })) requireNumber(value, label);
   return { requestedUnits, packageCount, unitProductionCost, productsCost, unitPackagingCost, containersCost, stickerCount, stickerCost, packagingCost, quotedCost, isPartial: missingInputs.length > 0, missingInputs };
+}
+
+/** Sugiere un precio por recargo sobre costo o margen sobre venta, sin redondear ni sumar comisiones. */
+export function calculateSuggestedSalePrice(cost: number, percentage: number, basis: PricingBasis): number {
+  requireNumber(cost, 'El costo');
+  requireNumber(percentage, 'El porcentaje');
+  if (basis !== 'markup' && basis !== 'margin') throw new RangeError('Elegí recargo sobre costo o margen sobre venta.');
+  if (basis === 'margin' && percentage >= 100) throw new RangeError('El margen sobre venta debe ser menor que 100%.');
+  const price = basis === 'markup' ? cost * (1 + percentage / 100) : cost / (1 - percentage / 100);
+  requireNumber(price, 'El precio sugerido');
+  return price;
+}
+
+/** Calcula cuánto queda al precio elegido; admite pérdidas y conserva null si el porcentaje no tiene base. */
+export function calculateSaleProfit(cost: number, salePrice: number): SaleProfit {
+  requireNumber(cost, 'El costo');
+  requireNumber(salePrice, 'El precio de venta');
+  const profit = salePrice - cost;
+  const markupPercentage = cost === 0 ? null : profit / cost * 100;
+  const marginPercentage = salePrice === 0 ? null : profit / salePrice * 100;
+  if ((markupPercentage !== null && !Number.isFinite(markupPercentage)) || (marginPercentage !== null && !Number.isFinite(marginPercentage))) {
+    throw new RangeError('Los porcentajes calculados deben ser finitos.');
+  }
+  return { salePrice, profit, markupPercentage, marginPercentage };
 }
