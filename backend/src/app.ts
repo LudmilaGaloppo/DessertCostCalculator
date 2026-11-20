@@ -3,9 +3,11 @@ import { InputError, validateSupplyInput } from './supplies/validation.js';
 import type { SupplyRepository } from './supplies/repository.js';
 import type { RecipeRepository } from './recipes/repository.js';
 import { validateRecipeInput } from './recipes/validation.js';
+import type { CostSettingsRepository } from './settings/repository.js';
+import { validateHourlyRate } from './settings/validation.js';
 
 /** Crea la API local de insumos y recetas con repositorios reemplazables para las pruebas. */
-export function createApp(repository: SupplyRepository, recipes: RecipeRepository) {
+export function createApp(repository: SupplyRepository, recipes: RecipeRepository, settings: CostSettingsRepository) {
   const app = express();
   app.disable('x-powered-by');
   app.use(express.json({ limit: '16kb' }));
@@ -55,6 +57,17 @@ export function createApp(repository: SupplyRepository, recipes: RecipeRepositor
     response.json({ recipe });
   }
 
+  /** Devuelve la tarifa general o null si todavía no fue configurada. */
+  async function getCostSettings(_request: Request, response: Response) {
+    response.json({ settings: await settings.get() });
+  }
+
+  /** Valida y guarda el valor general de la hora de trabajo. */
+  async function updateCostSettings(request: Request, response: Response) {
+    if (!request.is('application/json')) { response.status(415).json({ message: 'Enviá JSON.' }); return; }
+    response.json({ settings: await settings.update(validateHourlyRate(request.body)) });
+  }
+
   /** Informa que la ruta solicitada no pertenece a esta API. */
   function notFound(_request: Request, response: Response) {
     response.status(404).json({ message: 'Ruta no encontrada.' });
@@ -75,6 +88,8 @@ export function createApp(repository: SupplyRepository, recipes: RecipeRepositor
   app.get('/api/recipes', listRecipes);
   app.post('/api/recipes', createRecipe);
   app.put('/api/recipes/:id', updateRecipe);
+  app.get('/api/settings/costs', getCostSettings);
+  app.put('/api/settings/costs', updateCostSettings);
   app.use(notFound);
   app.use(handleError);
   return app;

@@ -6,6 +6,7 @@ import mongoose from 'mongoose';
 import { createApp } from '../../src/app.js';
 import { createSupplyRepository } from '../../src/supplies/repository.js';
 import { createRecipeRepository } from '../../src/recipes/repository.js';
+import { createCostSettingsRepository } from '../../src/settings/repository.js';
 import type { Recipe, Supply } from '@dessert-cost/shared';
 
 test('MongoDB local persiste insumos, permite releerlos desde otra conexión y actualiza por ID', async (context) => {
@@ -13,7 +14,7 @@ test('MongoDB local persiste insumos, permite releerlos desde otra conexión y a
   // dbName reemplaza la base de la URI: nunca se escribe en el catálogo de la usuaria.
   const dbName = `dessert_cost_test_${randomUUID().replaceAll('-', '')}`;
   const connection = await mongoose.createConnection(uri, { dbName, serverSelectionTimeoutMS: 5000 }).asPromise();
-  const server = createApp(createSupplyRepository(connection), createRecipeRepository(connection)).listen(0, '127.0.0.1');
+  const server = createApp(createSupplyRepository(connection), createRecipeRepository(connection), createCostSettingsRepository(connection)).listen(0, '127.0.0.1');
   context.after(async () => {
     server.closeAllConnections();
     server.close();
@@ -46,7 +47,7 @@ test('MongoDB local persiste insumos, permite releerlos desde otra conexión y a
   assert.equal(saved.supplies[0].id, supply.id);
   assert.equal(saved.supplies[0].purchasePrice, 8000);
   const recipesUrl = `http://127.0.0.1:${address.port}/api/recipes`;
-  const recipeInput = { name: 'Cookies de prueba', yieldQuantity: 12, yieldUnit: 'unit', ingredients: [{ supplyId: supply.id, quantity: 375, unit: 'g' }] };
+  const recipeInput = { name: 'Cookies de prueba', yieldQuantity: 12, yieldUnit: 'unit', workingHours: 3, ingredients: [{ supplyId: supply.id, quantity: 375, unit: 'g' }] };
   const recipeResponse = await fetch(recipesUrl, { method: 'POST', headers, body: JSON.stringify(recipeInput) });
   assert.equal(recipeResponse.status, 201);
   const { recipe } = await recipeResponse.json() as { recipe: Recipe };
@@ -55,7 +56,12 @@ test('MongoDB local persiste insumos, permite releerlos desde otra conexión y a
   const updatedRecipeResponse = await fetch(`${recipesUrl}/${recipe.id}`, { method: 'PUT', headers, body: JSON.stringify({ ...recipeInput, yieldQuantity: 15 }) });
   assert.equal(updatedRecipeResponse.status, 200);
   assert.equal(((await updatedRecipeResponse.json()) as { recipe: Recipe }).recipe.yieldQuantity, 15);
+  const settingsUrl = `http://127.0.0.1:${address.port}/api/settings/costs`;
+  assert.deepEqual(await (await fetch(settingsUrl)).json(), { settings: { hourlyRate: null } });
+  assert.equal((await fetch(settingsUrl, { method: 'PUT', headers, body: JSON.stringify({ hourlyRate: 5000 }) })).status, 200);
+  assert.deepEqual(await (await fetch(settingsUrl)).json(), { settings: { hourlyRate: 5000 } });
   assert.equal((await fetch(url, { method: 'POST', headers, body: JSON.stringify({ ...input, purchaseQuantity: 0 }) })).status, 400);
   assert.equal(await connection.collection('supplies').countDocuments(), 1);
   assert.equal(await connection.collection('recipes').countDocuments(), 1);
+  assert.equal(await connection.collection('settings').countDocuments(), 1);
 });

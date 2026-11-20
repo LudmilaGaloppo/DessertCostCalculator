@@ -7,20 +7,20 @@ const flour: Supply = { id: 'flour', name: 'Harina', purchaseQuantity: 2.5, purc
 
 test('el formulario arma una receta con rendimiento y cantidades convertibles', () => {
   const input = recipeInputFromForm({
-    name: ' Cookies ', yieldQuantity: '12', yieldUnit: 'unit',
+    name: ' Cookies ', yieldQuantity: '12', yieldUnit: 'unit', workingHours: '3,5',
     ingredients: [{ supplyId: flour.id, quantity: '375', unit: 'g' }],
   }, [flour]);
-  assert.deepEqual(input, { name: 'Cookies', yieldQuantity: 12, yieldUnit: 'unit', ingredients: [{ supplyId: 'flour', quantity: 375, unit: 'g' }] });
+  assert.deepEqual(input, { name: 'Cookies', yieldQuantity: 12, yieldUnit: 'unit', workingHours: 3.5, ingredients: [{ supplyId: 'flour', quantity: 375, unit: 'g' }] });
 });
 
 test('el formulario rechaza referencias faltantes y unidades incompatibles', () => {
-  assert.throws(() => recipeInputFromForm({ name: 'Cookies', yieldQuantity: '12', yieldUnit: 'unit', ingredients: [{ supplyId: '', quantity: '375', unit: 'g' }] }, [flour]), /identificador del insumo/i);
-  assert.throws(() => recipeInputFromForm({ name: 'Cookies', yieldQuantity: '12', yieldUnit: 'unit', ingredients: [{ supplyId: 'flour', quantity: '375', unit: 'ml' }] }, [flour]), /incompatibles/i);
+  assert.throws(() => recipeInputFromForm({ name: 'Cookies', yieldQuantity: '12', yieldUnit: 'unit', workingHours: '', ingredients: [{ supplyId: '', quantity: '375', unit: 'g' }] }, [flour]), /identificador del insumo/i);
+  assert.throws(() => recipeInputFromForm({ name: 'Cookies', yieldQuantity: '12', yieldUnit: 'unit', workingHours: '', ingredients: [{ supplyId: 'flour', quantity: '375', unit: 'ml' }] }, [flour]), /incompatibles/i);
 });
 
 test('la conversión entre receta persistida y formulario no comparte arrays mutables', () => {
   const empty = emptyRecipeForm();
-  const form = recipeToForm({ name: 'Cookies', yieldQuantity: 12, yieldUnit: 'unit', ingredients: [{ supplyId: 'flour', quantity: 375, unit: 'g' }] });
+  const form = recipeToForm({ name: 'Cookies', yieldQuantity: 12, yieldUnit: 'unit', workingHours: null, ingredients: [{ supplyId: 'flour', quantity: 375, unit: 'g' }] });
   empty.ingredients[0].quantity = '1';
   assert.equal(form.ingredients[0].quantity, '375');
 });

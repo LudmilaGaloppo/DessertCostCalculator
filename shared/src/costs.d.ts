@@ -26,6 +26,7 @@ export interface RecipeInput {
   name: string;
   yieldQuantity: number;
   yieldUnit: Unit;
+  workingHours: number | null;
   ingredients: readonly RecipeIngredient[];
 }
 
@@ -42,4 +43,16 @@ export interface IngredientCost extends RecipeIngredient {
 export interface RecipeIngredientsCost {
   items: IngredientCost[];
   ingredientsSubtotal: number;
+}
+
+// Configuración general usada para valorar el trabajo de cualquier receta.
+export interface CostSettings {
+  hourlyRate: number | null;
+}
+
+// Desglose conocido de producción; null distingue un costo pendiente de un costo cero.
+export interface ProductionCost extends RecipeIngredientsCost {
+  laborCost: number | null;
+  productionSubtotal: number;
+  missingInputs: string[];
 }

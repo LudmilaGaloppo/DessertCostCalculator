@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
-import type { Recipe, RecipeIngredientsCost, Supply } from '@dessert-cost/shared';
+import type { CostSettings, ProductionCost, Recipe, Supply } from '@dessert-cost/shared';
 import type { RecipeFormValues } from '../types/recipe-form';
 import { emptyRecipeForm, recipeInputFromForm, recipeToForm } from '../utils/recipe-form';
 import { validateDecimalField } from '../utils/ingredient-form';
-import { calculateRecipeIngredients } from '../domain/costs';
+import { calculateProductionCost } from '../domain/costs';
 import { listSupplies } from '../services/supplies';
 import { listRecipes, saveRecipe } from '../services/recipes';
+import { getCostSettings, saveHourlyRate } from '../services/settings';
+import { parseDecimal } from '../utils/ingredient-form';
 
 const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
 const decimal = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 6 });
@@ -24,6 +26,7 @@ function FieldError({ id, message }: { id: string; message?: string }) {
 /** Administra recetas con varias filas y calcula con precios recién consultados. */
 export default function RecipeEditor() {
   const { register, control, handleSubmit, reset, clearErrors, formState: { errors } } = useForm<RecipeFormValues>({ defaultValues: emptyRecipeForm() });
+  const { register: registerSettings, handleSubmit: handleSettingsSubmit, reset: resetSettings, formState: { errors: settingsErrors } } = useForm<{ hourlyRate: string }>({ defaultValues: { hourlyRate: '' } });
   // useFieldArray mantiene un ID estable por fila aunque se agreguen o quiten ingredientes.
   const { fields, append, remove } = useFieldArray({ control, name: 'ingredients' });
   const [supplies, setSupplies] = useState<Supply[]>([]);
@@ -33,7 +36,8 @@ export default function RecipeEditor() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
-  const [result, setResult] = useState<RecipeIngredientsCost | null>(null);
+  const [settings, setSettings] = useState<CostSettings>({ hourlyRate: null });
+  const [result, setResult] = useState<ProductionCost | null>(null);
   const requestInProgress = useRef(false);
 
   // Cancela la consulta si se cambia de sección antes de recibir la respuesta.
@@ -47,9 +51,10 @@ export default function RecipeEditor() {
   async function refreshData(signal?: AbortSignal) {
     setLoading(true); setError(''); setResult(null);
     try {
-      const [currentSupplies, currentRecipes] = await Promise.all([listSupplies(signal), listRecipes(signal)]);
+      const [currentSupplies, currentRecipes, currentSettings] = await Promise.all([listSupplies(signal), listRecipes(signal), getCostSettings(signal)]);
       if (signal?.aborted) return;
-      setSupplies(currentSupplies); setRecipes(currentRecipes);
+      setSupplies(currentSupplies); setRecipes(currentRecipes); setSettings(currentSettings);
+      resetSettings({ hourlyRate: currentSettings.hourlyRate === null ? '' : String(currentSettings.hourlyRate) });
     } catch (cause) {
       if (!signal?.aborted) setError(cause instanceof Error ? cause.message : 'No se pudieron cargar los datos.');
     } finally { if (!signal?.aborted) setLoading(false); }
@@ -74,6 +79,21 @@ export default function RecipeEditor() {
   /** Quita una fila y descarta el subtotal anterior. */
   function removeIngredient(index: number) { remove(index); clearResult(); }
 
+  /** Valida y guarda la tarifa compartida por todas las recetas. */
+  async function updateHourlyRate(values: { hourlyRate: string }) {
+    if (requestInProgress.current) return;
+    requestInProgress.current = true; setBusy(true); setError(''); setMessage(''); setResult(null);
+    try {
+      const value = parseDecimal(values.hourlyRate, 'el valor de la hora');
+      if (value <= 0) throw new Error('El valor de la hora debe ser mayor que cero.');
+      const saved = await saveHourlyRate(value);
+      setSettings(saved); resetSettings({ hourlyRate: String(saved.hourlyRate) });
+      setMessage('Valor de la hora actualizado. Volvé a calcular la receta.');
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'No se pudo guardar el valor de la hora.');
+    } finally { requestInProgress.current = false; setBusy(false); }
+  }
+
   /** Valida, calcula y opcionalmente persiste la receta. */
   async function processRecipe(values: RecipeFormValues, persist: boolean) {
     if (requestInProgress.current) return;
@@ -82,7 +102,7 @@ export default function RecipeEditor() {
       const currentSupplies = await listSupplies();
       setSupplies(currentSupplies);
       const input = recipeInputFromForm(values, currentSupplies);
-      const calculated = calculateRecipeIngredients(input, currentSupplies);
+      const calculated = calculateProductionCost(input, currentSupplies, settings);
       if (persist) {
         const saved = await saveRecipe(input, selectedId || undefined);
         setRecipes((previous) => [...previous.filter((item) => item.id !== saved.id), saved].sort((a, b) => a.name.localeCompare(b.name)));
@@ -112,6 +132,9 @@ export default function RecipeEditor() {
             <label className="field">Cantidad producida<input {...register('yieldQuantity', { validate: (value) => validateDecimalField(value, 'el rendimiento', true) })} inputMode="decimal" placeholder="12" aria-invalid={Boolean(errors.yieldQuantity)} aria-describedby="yield-error" /><FieldError id="yield-error" message={errors.yieldQuantity?.message} /></label>
             <label className="field">Unidad de rendimiento<select {...register('yieldUnit')}><UnitOptions /></select></label>
           </div></fieldset>
+          <fieldset><legend>Mano de obra</legend><p className="section-help">Ingresá las horas atribuibles a una tanda. Podés dejarlo pendiente sin convertirlo en cero.</p>
+            <label className="field">Horas de trabajo<input {...register('workingHours', { validate: (value) => value.trim() === '' || validateDecimalField(value, 'las horas de trabajo') })} inputMode="decimal" placeholder="3" aria-invalid={Boolean(errors.workingHours)} aria-describedby="working-hours-error" /><FieldError id="working-hours-error" message={errors.workingHours?.message} /></label>
+          </fieldset>
           <fieldset><legend>Ingredientes</legend><p className="section-help">Elegí insumos guardados. Por ejemplo, usá 375 g de una harina comprada en kg.</p>
             {fields.map((field, index) => <fieldset className="ingredient-row" key={field.id}><legend>Ingrediente {index + 1}</legend>
               <label className="field">Insumo<select {...register(`ingredients.${index}.supplyId`, { required: 'Elegí un insumo.' })} aria-invalid={Boolean(errors.ingredients?.[index]?.supplyId)} aria-describedby={`supply-error-${index}`}><option value="">Seleccionar insumo</option>{supplies.map((supply) => <option key={supply.id} value={supply.id}>{supply.name} · compra en {supply.purchaseUnit}</option>)}</select><FieldError id={`supply-error-${index}`} message={errors.ingredients?.[index]?.supplyId?.message} /></label>
@@ -127,9 +150,10 @@ export default function RecipeEditor() {
         <p className="decimal-help">Guardá tus cambios antes de cambiar de sección.</p>
       </form>
       <aside className="result-column" aria-label="Recetas guardadas y subtotal">
+        <form className="catalog-card" onSubmit={handleSettingsSubmit(updateHourlyRate)} noValidate><div className="card-heading"><h2>Valor de tu hora</h2></div><p className="section-help">Configuración general para todas las recetas.</p><label className="field">Tarifa por hora (ARS)<input {...registerSettings('hourlyRate', { validate: (value) => validateDecimalField(value, 'el valor de la hora', true) })} inputMode="decimal" placeholder="Por ejemplo, 5000" aria-invalid={Boolean(settingsErrors.hourlyRate)} aria-describedby="hourly-rate-error" /><FieldError id="hourly-rate-error" message={settingsErrors.hourlyRate?.message} /></label><button type="submit" className="secondary-button save-button" disabled={busy || loading}>Guardar tarifa</button></form>
         <section className="catalog-card"><div className="card-heading"><h2>Recetas guardadas</h2><button type="button" className="text-button" disabled={busy || loading} onClick={() => void refreshData()}>Actualizar listas</button></div><label className="field">Cargar una receta<select value={selectedId} onChange={loadRecipe} disabled={busy || loading}><option value="">Nueva receta</option>{recipes.map((recipe) => <option key={recipe.id} value={recipe.id}>{recipe.name}</option>)}</select></label>{loading && <p role="status">Cargando datos…</p>}{!loading && !recipes.length && <p className="section-help catalog-help">Todavía no hay recetas guardadas.</p>}{!loading && !supplies.length && <p className="section-help catalog-help">Primero guardá tus compras en Insumos.</p>}</section>
-        <section className="result-card" aria-live="polite"><p className="eyebrow">SUBTOTAL DE INGREDIENTES</p>{result ? <><h2 className="result-amount">{pesos.format(result.ingredientsSubtotal)}</h2><dl className="result-breakdown">{result.items.map((item, index) => <div key={index}><dt>{item.name}<br /><small>{decimal.format(item.quantity)} {item.unit === 'unit' ? 'unidades' : item.unit}</small></dt><dd>{pesos.format(item.cost)}</dd></div>)}</dl><p className="result-footnote">Precios consultados al realizar este cálculo.</p></> : <><h2 className="result-placeholder">Tu receta, ingrediente a ingrediente.</h2><p className="result-description">Completá el formulario para ver el desglose.</p></>}</section>
-        <section className="scope-note"><h2>Solo ingredientes</h2><p>Este subtotal todavía no incluye mano de obra, energía ni envases. No es el precio de venta.</p></section>
+        <section className="result-card" aria-live="polite"><p className="eyebrow">COSTOS CONTEMPLADOS</p>{result ? <><h2 className="result-amount">{pesos.format(result.productionSubtotal)}</h2><dl className="result-breakdown"><div><dt>Ingredientes</dt><dd>{pesos.format(result.ingredientsSubtotal)}</dd></div><div><dt>Mano de obra</dt><dd>{result.laborCost === null ? 'Pendiente' : pesos.format(result.laborCost)}</dd></div>{result.items.map((item, index) => <div className="ingredient-detail" key={index}><dt>{item.name}<br /><small>{decimal.format(item.quantity)} {item.unit === 'unit' ? 'unidades' : item.unit}</small></dt><dd>{pesos.format(item.cost)}</dd></div>)}</dl>{result.missingInputs.length > 0 && <p className="pending-cost" role="status">Falta completar: {result.missingInputs.join(' y ')}. El importe mostrado es parcial.</p>}<p className="result-footnote">Precios y tarifa consultados al realizar este cálculo.</p></> : <><h2 className="result-placeholder">Tu receta, ingrediente a ingrediente.</h2><p className="result-description">Completá el formulario para ver el desglose.</p></>}</section>
+        <section className="scope-note"><h2>Costo parcial de producción</h2><p>Incluye ingredientes y mano de obra cuando están configurados. Energía y envases siguen fuera de este subtotal. No es el precio de venta.</p></section>
       </aside>
     </div>
   </main>;

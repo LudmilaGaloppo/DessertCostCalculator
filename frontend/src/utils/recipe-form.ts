@@ -5,13 +5,14 @@ import { calculateRecipeIngredients } from '../domain/costs.js';
 
 /** Crea campos vacíos independientes para una nueva receta. */
 export function emptyRecipeForm(): RecipeFormValues {
-  return { name: '', yieldQuantity: '', yieldUnit: 'unit', ingredients: [{ supplyId: '', quantity: '', unit: 'g' }] };
+  return { name: '', yieldQuantity: '', yieldUnit: 'unit', workingHours: '', ingredients: [{ supplyId: '', quantity: '', unit: 'g' }] };
 }
 
 /** Convierte los números persistidos en textos editables por React Hook Form. */
 export function recipeToForm(recipe: RecipeInput): RecipeFormValues {
   return {
     name: recipe.name, yieldQuantity: String(recipe.yieldQuantity), yieldUnit: recipe.yieldUnit,
+    workingHours: recipe.workingHours === null ? '' : String(recipe.workingHours),
     ingredients: recipe.ingredients.map((item) => ({ ...item, quantity: String(item.quantity) })),
   };
 }
@@ -31,7 +32,9 @@ export function recipeInputFromForm(values: RecipeFormValues, supplies: readonly
     return { supplyId: item.supplyId, quantity, unit: parseUnit(item.unit) };
   }
 
-  const input = { name, yieldQuantity, yieldUnit: parseUnit(values.yieldUnit), ingredients: values.ingredients.map(toIngredient) };
+  const workingHours = values.workingHours.trim() === '' ? null : parseDecimal(values.workingHours, 'las horas de trabajo');
+  if (workingHours !== null && workingHours < 0) throw new Error('Las horas de trabajo no pueden ser negativas.');
+  const input = { name, yieldQuantity, yieldUnit: parseUnit(values.yieldUnit), workingHours, ingredients: values.ingredients.map(toIngredient) };
   calculateRecipeIngredients(input, supplies);
   return input;
 }

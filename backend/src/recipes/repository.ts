@@ -20,6 +20,7 @@ const recipeSchema = new Schema<RecipeInput>({
   name: { type: String, required: true, trim: true, maxlength: 120 },
   yieldQuantity: { type: Number, required: true, validate: isPositiveFinite },
   yieldUnit: { type: String, required: true, enum: units },
+  workingHours: { type: Number, default: null, validate: { validator: (value: number | null) => value === null || (Number.isFinite(value) && value >= 0) } },
   ingredients: { type: [ingredientSchema], required: true },
 }, { timestamps: true, versionKey: false, bufferCommands: false });
 
@@ -32,6 +33,7 @@ export function createRecipeRepository(connection: Connection): RecipeRepository
     return {
       id: document._id.toString(), name: document.name,
       yieldQuantity: document.yieldQuantity, yieldUnit: document.yieldUnit,
+      workingHours: document.workingHours ?? null,
       ingredients: document.ingredients.map(({ supplyId, quantity, unit }) => ({ supplyId, quantity, unit })),
     };
   }

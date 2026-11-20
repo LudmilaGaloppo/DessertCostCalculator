@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { convertQuantity, calculateIngredientCost, calculateRecipeIngredients } from '../src/domain/costs.js';
-import type { Supply, RecipeIngredient, Unit } from '@dessert-cost/shared';
+import { convertQuantity, calculateIngredientCost, calculateProductionCost, calculateRecipeIngredients } from '../src/domain/costs.js';
+import type { RecipeInput, Supply, RecipeIngredient, Unit } from '@dessert-cost/shared';
 
 const flour: Supply = Object.freeze({ id: 'flour', name: 'Harina', purchaseQuantity: 2.5, purchaseUnit: 'kg', purchasePrice: 6000 });
 const ingredient: RecipeIngredient = Object.freeze({ supplyId: 'flour', quantity: 375, unit: 'g' });
@@ -77,4 +77,22 @@ test('una receta vacía tiene subtotal cero; rechaza colecciones inválidas', ()
   assert.throws(() => calculateRecipeIngredients({ ingredients: null }, []), TypeError);
   // @ts-expect-error Colección inválida intencional.
   assert.throws(() => calculateRecipeIngredients({ ingredients: [] }, null), TypeError);
+});
+
+test('suma la mano de obra al subtotal con la tarifa general', () => {
+  const recipe: RecipeInput = { name: 'Cookies', yieldQuantity: 12, yieldUnit: 'unit', workingHours: 3, ingredients: [ingredient] };
+  const result = calculateProductionCost(recipe, [flour], { hourlyRate: 5000 });
+  assert.equal(result.ingredientsSubtotal, 900);
+  assert.equal(result.laborCost, 15000);
+  assert.equal(result.productionSubtotal, 15900);
+  assert.deepEqual(result.missingInputs, []);
+});
+
+test('mantiene el costo parcial cuando faltan horas o tarifa', () => {
+  const recipe: RecipeInput = { name: 'Cookies', yieldQuantity: 12, yieldUnit: 'unit', workingHours: null, ingredients: [ingredient] };
+  assert.deepEqual(calculateProductionCost(recipe, [flour], { hourlyRate: null }).missingInputs, ['horas de trabajo', 'valor de la hora']);
+  const result = calculateProductionCost({ ...recipe, workingHours: 3 }, [flour], { hourlyRate: null });
+  assert.equal(result.laborCost, null);
+  assert.equal(result.productionSubtotal, 900);
+  assert.deepEqual(result.missingInputs, ['valor de la hora']);
 });

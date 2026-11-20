@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import { createApp } from './app.js';
 import { createSupplyRepository } from './supplies/repository.js';
 import { createRecipeRepository } from './recipes/repository.js';
+import { createCostSettingsRepository } from './settings/repository.js';
 
 /** Abre MongoDB y recién después inicia la API, accesible únicamente desde esta computadora. */
 async function startServer() {
@@ -9,7 +10,7 @@ async function startServer() {
   const port = Number(process.env.API_PORT ?? 3001);
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Puerto inválido.');
   const connection = await mongoose.createConnection(uri, { serverSelectionTimeoutMS: 5000 }).asPromise();
-  const app = createApp(createSupplyRepository(connection), createRecipeRepository(connection));
+  const app = createApp(createSupplyRepository(connection), createRecipeRepository(connection), createCostSettingsRepository(connection));
   const server = app.listen(port, '127.0.0.1');
 
   /** Informa la dirección de la API cuando el puerto ya está disponible. */

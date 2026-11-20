@@ -12,6 +12,7 @@ const recipe: Recipe = {
   name: 'Cookies de ejemplo',
   yieldQuantity: 12,
   yieldUnit: 'unit',
+  workingHours: 3,
   ingredients: [
     { supplyId: 'flour', quantity: 375, unit: 'g' },
     { supplyId: 'sugar', quantity: 150, unit: 'g' },

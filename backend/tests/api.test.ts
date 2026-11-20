@@ -4,6 +4,7 @@ import { once } from 'node:events';
 import { createApp } from '../src/app.js';
 import type { SupplyRepository } from '../src/supplies/repository.js';
 import type { RecipeRepository } from '../src/recipes/repository.js';
+import type { CostSettingsRepository } from '../src/settings/repository.js';
 import type { Recipe, Supply } from '@dessert-cost/shared';
 
 const id = '507f1f77bcf86cd799439011';
@@ -29,7 +30,14 @@ test('la API valida JSON, crea insumos y distingue errores de entrada, ausencia 
     /** Simula una receta válida que ya no existe. */
     async update() { return null; },
   };
-  const server = createApp(repository, recipeRepository).listen(0, '127.0.0.1');
+  let hourlyRate: number | null = null;
+  const settingsRepository: CostSettingsRepository = {
+    /** Devuelve el valor actual de la configuración simulada. */
+    async get() { return { hourlyRate }; },
+    /** Conserva la tarifa para verificar lectura y actualización por HTTP. */
+    async update(value) { hourlyRate = value; return { hourlyRate }; },
+  };
+  const server = createApp(repository, recipeRepository, settingsRepository).listen(0, '127.0.0.1');
   await once(server, 'listening');
   context.after(() => { server.closeAllConnections(); server.close(); });
   const address = server.address();
@@ -43,13 +51,17 @@ test('la API valida JSON, crea insumos y distingue errores de entrada, ausencia 
   assert.equal(created.status, 201);
   assert.deepEqual(await created.json(), { supply: { ...input, id } });
   assert.deepEqual(await (await fetch(url)).json(), { supplies: [{ ...input, id }] });
-  const recipeInput = { name: 'Cookies', yieldQuantity: 12, yieldUnit: 'unit', ingredients: [{ supplyId: id, quantity: 375, unit: 'g' }] };
+  const recipeInput = { name: 'Cookies', yieldQuantity: 12, yieldUnit: 'unit', workingHours: 3, ingredients: [{ supplyId: id, quantity: 375, unit: 'g' }] };
   const recipesUrl = `http://127.0.0.1:${address.port}/api/recipes`;
   const recipeCreated = await fetch(recipesUrl, { method: 'POST', headers, body: JSON.stringify(recipeInput) });
   assert.equal(recipeCreated.status, 201);
   assert.deepEqual(await recipeCreated.json(), { recipe: { ...recipeInput, id: recipeId } });
   assert.deepEqual(await (await fetch(recipesUrl)).json(), { recipes: [{ ...recipeInput, id: recipeId }] });
   assert.equal((await fetch(recipesUrl, { method: 'POST', headers, body: JSON.stringify({ ...recipeInput, ingredients: [{ ...recipeInput.ingredients[0], unit: 'ml' }] }) })).status, 400);
+  const settingsUrl = `http://127.0.0.1:${address.port}/api/settings/costs`;
+  assert.deepEqual(await (await fetch(settingsUrl)).json(), { settings: { hourlyRate: null } });
+  assert.equal((await fetch(settingsUrl, { method: 'PUT', headers, body: JSON.stringify({ hourlyRate: 0 }) })).status, 400);
+  assert.deepEqual(await (await fetch(settingsUrl, { method: 'PUT', headers, body: JSON.stringify({ hourlyRate: 5000 }) })).json(), { settings: { hourlyRate: 5000 } });
   assert.equal((await fetch(`${url}/invalid`, { method: 'PUT', headers, body: JSON.stringify(input) })).status, 400);
   assert.equal((await fetch(`${url}/${id}`, { method: 'PUT', headers, body: JSON.stringify(input) })).status, 404);
   /** Simula la caída de MongoDB para verificar que no se filtren detalles internos. */

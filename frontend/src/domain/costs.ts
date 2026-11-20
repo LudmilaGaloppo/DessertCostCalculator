@@ -4,7 +4,7 @@
 // ingredient.supplyId referencia supply.id; el precio se obtiene del insumo.
 // Ejemplo y explicación: ../../../docs/04-calculo-de-receta.md
 
-import type { Unit, Supply, RecipeIngredient, RecipeIngredientsCost } from '@dessert-cost/shared';
+import type { Unit, Supply, RecipeIngredient, RecipeIngredientsCost, RecipeInput, CostSettings, ProductionCost } from '@dessert-cost/shared';
 
 interface UnitDefinition {
   dimension: 'mass' | 'volume' | 'count';
@@ -99,4 +99,26 @@ export function calculateRecipeIngredients(
   const ingredientsSubtotal = items.reduce((total, item) => total + item.cost, 0);
   requireNumber(ingredientsSubtotal, 'El subtotal de ingredientes');
   return { items, ingredientsSubtotal };
+}
+
+/** Suma ingredientes y mano de obra conocida, e informa qué entrada falta sin asumir costo cero. */
+export function calculateProductionCost(recipe: RecipeInput, supplies: readonly Supply[], settings: CostSettings): ProductionCost {
+  const ingredientCost = calculateRecipeIngredients(recipe, supplies);
+  if (!settings || typeof settings !== 'object') throw new TypeError('La configuración de costos es obligatoria.');
+  const missingInputs: string[] = [];
+  let laborCost: number | null = null;
+  if (recipe.workingHours === null) missingInputs.push('horas de trabajo');
+  if (settings.hourlyRate === null) missingInputs.push('valor de la hora');
+  if (recipe.workingHours !== null && settings.hourlyRate !== null) {
+    requireNumber(recipe.workingHours, 'Las horas de trabajo');
+    requireNumber(settings.hourlyRate, 'El valor de la hora', true);
+    laborCost = recipe.workingHours * settings.hourlyRate;
+    requireNumber(laborCost, 'El costo de mano de obra');
+  }
+  return {
+    ...ingredientCost,
+    laborCost,
+    productionSubtotal: ingredientCost.ingredientsSubtotal + (laborCost ?? 0),
+    missingInputs,
+  };
 }

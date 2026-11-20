@@ -72,6 +72,8 @@ input[aria-invalid="true"] { border-color: #a03243; }
 .page-nav button { border: 0; background: transparent; border-radius: 8px; padding: 10px 14px; color: #574d5d; }
 .page-nav button[aria-pressed="true"] { background: #f4e8ed; color: #743649; font-weight: 600; }
 .ingredient-row { border: 1px solid #e4e0e6; border-radius: 10px; padding: 16px; margin: 0 0 20px; }
+.ingredient-detail { padding-left: 12px; border-left: 2px solid #d8bdc7; }
+.pending-cost { color: #81222e; background: #fff0f1; border-radius: 8px; padding: 12px; line-height: 1.5; }
 select[aria-invalid="true"] { border-color: #a03243; }
 @media (max-width: 780px) {
   .topbar { height: 74px; padding: 0 22px; }
