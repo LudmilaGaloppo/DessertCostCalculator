@@ -59,6 +59,8 @@ test('MongoDB local persiste insumos, permite releerlos desde otra conexión y a
   assert.equal(updatedRecipeResponse.status, 200);
   assert.equal(((await updatedRecipeResponse.json()) as { recipe: Recipe }).recipe.yieldQuantity, 15);
   assert.equal((await fetch(`${url}/${supply.id}`, { method: 'DELETE' })).status, 409);
+  assert.equal((await fetch(`${recipesUrl}/${recipe.id}`, { method: 'DELETE' })).status, 204);
+  assert.deepEqual((await (await fetch(recipesUrl)).json() as { recipes: Recipe[] }).recipes, []);
   const unusedResponse = await fetch(url, { method: 'POST', headers, body: JSON.stringify({ ...input, name: 'Azúcar sin uso' }) });
   const { supply: unusedSupply } = await unusedResponse.json() as { supply: Supply };
   assert.equal((await fetch(`${url}/${unusedSupply.id}`, { method: 'DELETE' })).status, 204);
@@ -78,7 +80,7 @@ test('MongoDB local persiste insumos, permite releerlos desde otra conexión y a
   assert.deepEqual(await (await fetch(stickerUrl)).json(), { stickers: { name: 'Sticker de prueba', purchaseQuantity: 80, purchasePrice: 28000 } });
   assert.equal((await fetch(url, { method: 'POST', headers, body: JSON.stringify({ ...input, purchaseQuantity: 0 }) })).status, 400);
   assert.equal(await connection.collection('supplies').countDocuments(), 1);
-  assert.equal(await connection.collection('recipes').countDocuments(), 1);
+  assert.equal(await connection.collection('recipes').countDocuments(), 0);
   assert.equal(await connection.collection('settings').countDocuments(), 1);
   assert.equal(await connection.collection('packaging').countDocuments(), 1);
   assert.equal(await connection.collection('sticker_settings').countDocuments(), 1);

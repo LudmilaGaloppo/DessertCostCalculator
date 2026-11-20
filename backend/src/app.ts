@@ -74,6 +74,14 @@ export function createApp(repository: SupplyRepository, recipes: RecipeRepositor
     response.json({ recipe });
   }
 
+  /** Elimina una receta guardada después de validar su identificador. */
+  async function deleteRecipe(request: Request, response: Response) {
+    const id = request.params.id;
+    if (typeof id !== 'string' || !/^[a-f\d]{24}$/i.test(id)) throw new InputError('El identificador de la receta no es válido.');
+    if (!await recipes.delete(id)) { response.status(404).json({ message: 'La receta no existe.' }); return; }
+    response.status(204).end();
+  }
+
   /** Devuelve la tarifa general o null si todavía no fue configurada. */
   async function getCostSettings(_request: Request, response: Response) {
     response.json({ settings: await settings.get() });
@@ -145,6 +153,7 @@ export function createApp(repository: SupplyRepository, recipes: RecipeRepositor
   app.get('/api/recipes', listRecipes);
   app.post('/api/recipes', createRecipe);
   app.put('/api/recipes/:id', updateRecipe);
+  app.delete('/api/recipes/:id', deleteRecipe);
   app.get('/api/settings/costs', getCostSettings);
   app.put('/api/settings/costs', updateCostSettings);
   app.put('/api/settings/energy', updateEnergySettings);

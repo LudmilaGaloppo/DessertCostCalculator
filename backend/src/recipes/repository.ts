@@ -5,6 +5,7 @@ export interface RecipeRepository {
   list(): Promise<Recipe[]>;
   create(input: RecipeInput): Promise<Recipe>;
   update(id: string, input: RecipeInput): Promise<Recipe | null>;
+  delete(id: string): Promise<boolean>;
 }
 
 /** Rechaza cantidades cero, negativas o no finitas antes de persistir. */
@@ -52,5 +53,7 @@ export function createRecipeRepository(connection: Connection): RecipeRepository
       const document = await RecipeModel.findByIdAndUpdate(id, { $set: input }, { returnDocument: 'after', runValidators: true }).lean().exec();
       return document ? toRecipe(document) : null;
     },
+    /** Elimina la receta indicada y comunica si todavía existía. */
+    async delete(id) { return (await RecipeModel.findByIdAndDelete(id).lean().exec()) !== null; },
   };
 }

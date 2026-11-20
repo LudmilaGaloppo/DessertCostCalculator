@@ -6,7 +6,7 @@ import { emptyRecipeForm, recipeInputFromForm, recipeToForm } from '../utils/rec
 import { validateDecimalField } from '../utils/ingredient-form';
 import { calculateProductionCost } from '../domain/costs';
 import { listSupplies } from '../services/supplies';
-import { listRecipes, saveRecipe } from '../services/recipes';
+import { deleteRecipe, listRecipes, saveRecipe } from '../services/recipes';
 import { getCostSettings, saveEnergySettings, saveHourlyRate } from '../services/settings';
 import { parseDecimal } from '../utils/ingredient-form';
 
@@ -140,6 +140,22 @@ export default function RecipeEditor() {
   /** Guarda o actualiza la receta y muestra su subtotal. */
   async function save(values: RecipeFormValues) { await processRecipe(values, true); }
 
+  /** Pide confirmación y elimina la receta seleccionada sin borrar sus insumos. */
+  async function handleDeleteRecipe() {
+    const selected = recipes.find((recipe) => recipe.id === selectedId);
+    if (!selected || requestInProgress.current) return;
+    if (!window.confirm(`¿Eliminar la receta “${selected.name}”? Los insumos del catálogo se conservarán.`)) return;
+    requestInProgress.current = true; setBusy(true); setError(''); setMessage(''); setResult(null);
+    try {
+      await deleteRecipe(selected.id);
+      setRecipes((current) => current.filter((recipe) => recipe.id !== selected.id));
+      newRecipe();
+      setMessage(`Se eliminó la receta “${selected.name}”.`);
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'No se pudo eliminar la receta.');
+    } finally { requestInProgress.current = false; setBusy(false); }
+  }
+
   return <main id="main">
     <div className="page-heading"><p className="eyebrow">TUS RECETAS</p><h1>El costo de cada tanda.</h1><p>Combiná insumos del catálogo y definí cuánto rinde tu receta.</p></div>
     <div className="calculator-layout">
@@ -167,7 +183,8 @@ export default function RecipeEditor() {
             <button type="button" className="secondary-button" onClick={addIngredient} disabled={fields.length >= 100}>Agregar ingrediente</button>
           </fieldset>
           <p className="decimal-help">Podés usar coma o punto decimal, sin separador de miles.</p>
-          <div className="form-actions"><button type="submit" className="secondary-button">Calcular subtotal</button><button type="button" className="primary-button" onClick={handleSubmit(save)}>{selectedId ? 'Actualizar receta' : 'Guardar receta'}</button></div>
+          <div className="form-actions"><button type="submit" className="secondary-button">Calcular subtotal</button><button type="button" className="primary-button" onClick={handleSubmit(save)}>{selectedId ? 'Guardar cambios' : 'Guardar receta'}</button></div>
+          {selectedId && <button type="button" className="danger-button save-button" onClick={handleDeleteRecipe}>Eliminar receta</button>}
         </fieldset>
         {busy && <p role="status">Procesando receta…</p>}{error && <p className="field-error" role="alert">{error}</p>}{message && <p className="save-message" role="status">{message}</p>}
         <p className="decimal-help">Guardá tus cambios antes de cambiar de sección.</p>
@@ -175,7 +192,7 @@ export default function RecipeEditor() {
       <aside className="result-column" aria-label="Recetas guardadas y subtotal">
         <form className="catalog-card" onSubmit={handleSettingsSubmit(updateHourlyRate)} noValidate><div className="card-heading"><h2>Valor de tu hora</h2></div><p className="section-help">Configuración general para todas las recetas.</p><label className="field">Tarifa por hora (ARS)<input {...registerSettings('hourlyRate', { validate: (value) => validateDecimalField(value, 'el valor de la hora', true) })} inputMode="decimal" placeholder="Por ejemplo, 5000" aria-invalid={Boolean(settingsErrors.hourlyRate)} aria-describedby="hourly-rate-error" /><FieldError id="hourly-rate-error" message={settingsErrors.hourlyRate?.message} /></label><button type="submit" className="secondary-button save-button" disabled={busy || loading}>Guardar tarifa</button></form>
         <form className="catalog-card" onSubmit={energyForm.handleSubmit(updateEnergySettings)} noValidate><fieldset className="form-controls" disabled={busy || loading}><div className="card-heading"><h2>Promedios diarios de energía</h2></div><p className="section-help">Estimación sencilla y actualizable con cada factura.</p><label className="field">Gas por día (ARS)<input {...energyForm.register('gasDailyAverage', { validate: (value) => validateDecimalField(value, 'el promedio diario de gas', true) })} inputMode="decimal" placeholder="3000" aria-invalid={Boolean(energyForm.formState.errors.gasDailyAverage)} /><FieldError id="gas-daily-error" message={energyForm.formState.errors.gasDailyAverage?.message} /></label><label className="field price-field">Electricidad por día (ARS)<input {...energyForm.register('electricityDailyAverage', { validate: (value) => validateDecimalField(value, 'el promedio diario de electricidad', true) })} inputMode="decimal" placeholder="2850" aria-invalid={Boolean(energyForm.formState.errors.electricityDailyAverage)} /><FieldError id="electricity-daily-error" message={energyForm.formState.errors.electricityDailyAverage?.message} /></label><button type="submit" className="secondary-button save-button">Guardar promedios</button></fieldset></form>
-        <section className="catalog-card"><div className="card-heading"><h2>Recetas guardadas</h2><button type="button" className="text-button" disabled={busy || loading} onClick={() => void refreshData()}>Actualizar listas</button></div><label className="field">Cargar una receta<select value={selectedId} onChange={loadRecipe} disabled={busy || loading}><option value="">Nueva receta</option>{recipes.map((recipe) => <option key={recipe.id} value={recipe.id}>{recipe.name}</option>)}</select></label>{loading && <p role="status">Cargando datos…</p>}{!loading && !recipes.length && <p className="section-help catalog-help">Todavía no hay recetas guardadas.</p>}{!loading && !supplies.length && <p className="section-help catalog-help">Primero guardá tus compras en Insumos.</p>}</section>
+        <section className="catalog-card"><div className="card-heading"><h2>Recetas guardadas</h2><button type="button" className="text-button" disabled={busy || loading} onClick={() => void refreshData()}>Actualizar listas</button></div><label className="field">Cargar una receta<select value={selectedId} onChange={loadRecipe} disabled={busy || loading}><option value="">Nueva receta</option>{recipes.map((recipe) => <option key={recipe.id} value={recipe.id}>{recipe.name}</option>)}</select></label>{selectedId && <p className="section-help catalog-help">Estás editando esta receta. Modificá sus datos y elegí «Guardar cambios».</p>}{loading && <p role="status">Cargando datos…</p>}{!loading && !recipes.length && <p className="section-help catalog-help">Todavía no hay recetas guardadas.</p>}{!loading && !supplies.length && <p className="section-help catalog-help">Primero guardá tus compras en Insumos.</p>}</section>
         <section className="result-card" aria-live="polite"><p className="eyebrow">COSTOS CONTEMPLADOS</p>{result ? <><h2 className="result-amount">{pesos.format(result.productionSubtotal)}</h2><dl className="result-breakdown"><div><dt>Ingredientes</dt><dd>{pesos.format(result.ingredientsSubtotal)}</dd></div><div><dt>Mano de obra</dt><dd>{result.laborCost === null ? 'Pendiente' : pesos.format(result.laborCost)}</dd></div><div><dt>Horno a gas</dt><dd>{result.gasCost === null ? 'Pendiente' : pesos.format(result.gasCost)}</dd></div><div><dt>Batidora eléctrica</dt><dd>{result.electricityCost === null ? 'Pendiente' : pesos.format(result.electricityCost)}</dd></div>{result.items.map((item, index) => <div className="ingredient-detail" key={index}><dt>{item.name}<br /><small>{decimal.format(item.quantity)} {item.unit === 'unit' ? 'unidades' : item.unit}</small></dt><dd>{pesos.format(item.cost)}</dd></div>)}</dl>{result.missingInputs.length > 0 && <p className="pending-cost" role="status">Falta completar: {result.missingInputs.join(' y ')}. El importe mostrado es parcial.</p>}<p className="result-footnote">Precios, tarifa y promedios diarios consultados al calcular.</p></> : <><h2 className="result-placeholder">Tu receta, ingrediente a ingrediente.</h2><p className="result-description">Completá el formulario para ver el desglose.</p></>}</section>
         <section className="scope-note"><h2>Costo de producción contemplado</h2><p>Incluye ingredientes, mano de obra y el prorrateo simple de energía cuando están configurados. Los envases se suman al cotizar la venta.</p></section>
       </aside>

@@ -38,6 +38,13 @@ test('la API valida JSON, crea insumos y distingue errores de entrada, ausencia 
     async create(value) { const recipe = { ...value, id: recipeId }; savedRecipes.push(recipe); return recipe; },
     /** Simula una receta válida que ya no existe. */
     async update() { return null; },
+    /** Elimina la receta simulada si está presente. */
+    async delete(savedId) {
+      const index = savedRecipes.findIndex((recipe) => recipe.id === savedId);
+      if (index < 0) return false;
+      savedRecipes.splice(index, 1);
+      return true;
+    },
   };
   let hourlyRate: number | null = null;
   let gasDailyAverage: number | null = null;
@@ -105,7 +112,10 @@ test('la API valida JSON, crea insumos y distingue errores de entrada, ausencia 
   assert.deepEqual(await (await fetch(stickerUrl)).json(), { stickers: { name: 'Sticker', purchaseQuantity: 80, purchasePrice: 28000 } });
   assert.equal((await fetch(`${url}/invalid`, { method: 'PUT', headers, body: JSON.stringify(input) })).status, 400);
   assert.equal((await fetch(`${url}/${id}`, { method: 'PUT', headers, body: JSON.stringify(input) })).status, 404);
-  savedRecipes.length = 0;
+  assert.equal((await fetch(`${recipesUrl}/invalid`, { method: 'DELETE' })).status, 400);
+  assert.equal((await fetch(`${recipesUrl}/${recipeId}`, { method: 'DELETE' })).status, 204);
+  assert.deepEqual(await (await fetch(recipesUrl)).json(), { recipes: [] });
+  assert.equal((await fetch(`${recipesUrl}/${recipeId}`, { method: 'DELETE' })).status, 404);
   assert.equal((await fetch(`${url}/${id}`, { method: 'DELETE' })).status, 204);
   assert.deepEqual(await (await fetch(url)).json(), { supplies: [] });
   assert.equal((await fetch(`${url}/${id}`, { method: 'DELETE' })).status, 404);

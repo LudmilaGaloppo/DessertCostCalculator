@@ -13,3 +13,8 @@ export async function saveRecipe(input: RecipeInput, id?: string): Promise<Recip
   });
   return response.recipe;
 }
+
+/** Elimina una receta guardada; sus insumos permanecen en el catálogo. */
+export async function deleteRecipe(id: string): Promise<void> {
+  await request<void>(`/api/recipes/${encodeURIComponent(id)}`, { method: 'DELETE' });
+}
