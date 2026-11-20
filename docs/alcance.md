@@ -73,7 +73,7 @@ Poder recuperar insumos y recetas al volver a usar la aplicación. La forma de a
 | Energía | Método sencillo y explícito para estimar el costo de horno y hornallas |
 | Trabajo | Tarifa general y horas por receta implementadas; falta definir la regla personal para atribuir tiempos |
 | Gastos generales | Cómo repartirlos sin duplicar gastos ya incluidos |
-| Venta | Cómo representar envases, comisiones y otros gastos por presentación o canal cuando correspondan |
+| Venta | Packaging por unidad y caja implementado; quedan comisiones y otros gastos por canal |
 | Almacenamiento | MongoDB local integrado para insumos, recetas y configuración; quedan presupuestos y estrategia de respaldo |
 | Redondeo | Precisión de cálculo y tratamiento del precio elegido para vender |
 
