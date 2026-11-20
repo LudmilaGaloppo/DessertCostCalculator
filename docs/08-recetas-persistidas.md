@@ -1,6 +1,6 @@
 # Recetas persistidas
 
-La aplicación ya permite armar una receta con varios insumos del catálogo, indicar el rendimiento de una tanda y guardar la receta en MongoDB.
+La aplicación permite armar una receta con varios insumos del catálogo, indicar el rendimiento de una tanda y crear, editar o eliminar la receta en MongoDB.
 
 ## Qué se guarda
 
@@ -26,13 +26,20 @@ Ese identificador interno pertenece al formulario. `supplyId`, en cambio, identi
 4. Al guardar, la API vuelve a validar todo contra el catálogo.
 5. MongoDB persiste la receta en la colección `recipes`.
 
+Para editar, se carga una receta desde el selector, se modifican sus campos y se elige **Guardar cambios**. La actualización conserva el mismo identificador.
+
+Para eliminar, primero se selecciona la receta y se elige **Eliminar receta**. La pantalla pide confirmación y aclara que los insumos del catálogo se conservan. Como todavía no existen presupuestos persistidos que referencien recetas, no hay otra relación que bloquee esta eliminación. Cuando se incorporen presupuestos históricos, habrá que definir si protegen la receta o si guardan una copia de sus datos.
+
 Las rutas incorporadas son:
 
 - `GET /api/recipes`
 - `POST /api/recipes`
 - `PUT /api/recipes/:id`
+- `DELETE /api/recipes/:id`
 
-El bloque siguiente incorporó [mano de obra y costo parcial de producción](09-mano-de-obra.md). Energía, envases y precio de venta siguen pendientes.
+`DELETE` devuelve HTTP 204 cuando elimina la receta, HTTP 400 para un identificador inválido y HTTP 404 si ya no existe.
+
+El bloque siguiente incorporó [mano de obra y costo parcial de producción](09-mano-de-obra.md). Después se agregaron energía, envases y simulación de precios de venta.
 
 ## Cómo probarlo
 
@@ -46,4 +53,4 @@ npm run dev:api
 npm run dev
 ```
 
-Primero se guardan las compras en **Insumos**. Luego, en **Recetas**, se crea la tanda, se agregan ingredientes y se calcula o guarda. Para comprobar el precio vigente, se puede modificar un insumo, volver a la receta y calcular otra vez.
+Primero se guardan las compras en **Insumos**. Luego, en **Recetas**, se crea la tanda, se agregan ingredientes y se calcula o guarda. Para comprobar el precio vigente, se puede modificar un insumo, volver a la receta y calcular otra vez. Al eliminar una receta, sus insumos deben seguir disponibles en ambos formularios.
