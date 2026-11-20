@@ -1,6 +1,6 @@
 # MongoDB local y React Hook Form
 
-Estado: primera persistencia implementada para el catálogo de insumos. MongoDB local está disponible en esta computadora. Se verificaron compilación, 18 pruebas sin base de datos y una prueba de integración contra MongoDB real. La página y `/api/supplies` respondieron HTTP 200 a través de Vite. La revisión visual e interactiva sigue pendiente por un fallo de la herramienta del navegador.
+Estado: persistencia y administración del catálogo de insumos implementadas. MongoDB local está disponible en esta computadora. Se verificaron compilación, 35 pruebas sin base de datos y una prueba de integración contra una base temporal de MongoDB real. La edición y la eliminación también se comprobaron en Chromium con respuestas de API simuladas, sin modificar el catálogo personal.
 
 ## Cómo iniciar el proyecto
 
@@ -27,9 +27,12 @@ Para cambiar la conexión, copiá `backend/.env.example` a `backend/.env` y edit
 - **Guardar insumo:** crea un documento con nombre, cantidad comprada, unidad y precio de compra.
 - **Cargar un insumo:** recupera esos datos desde el selector del catálogo.
 - **Actualizar insumo guardado:** reemplaza los datos de compra del insumo seleccionado, conservando su ID.
+- **Eliminar insumo:** pide confirmación y elimina el documento si ninguna receta lo utiliza.
 - **Limpiar:** inicia una entrada nueva; no elimina documentos de MongoDB.
 
-Los registros no se deduplican por nombre: podés tener distintas marcas o presentaciones. Para modificar un insumo existente, primero seleccionalo en el catálogo.
+Los registros no se deduplican por nombre: podés tener distintas marcas o presentaciones. Para modificar o eliminar un insumo existente, primero seleccionalo en el catálogo. La pantalla muestra «Guardar cambios» y «Eliminar insumo» para hacer explícitas ambas acciones.
+
+Una receta conserva el identificador del insumo que utiliza. Por eso la API rechaza la eliminación con HTTP 409 mientras exista alguna receta que lo referencie e informa sus nombres. Primero hay que editar esas recetas para reemplazar o quitar el ingrediente. Esta protección se aplica en el servidor aunque la petición no provenga de la pantalla.
 
 La cantidad utilizada y el costo calculado siguen perteneciendo a esta simulación y no se guardan. Recetas completas, presupuestos históricos y usuarios todavía no están implementados. El cálculo proporcional funciona sin la API; el catálogo informa un error y permite reintentar con «Actualizar lista».
 
@@ -42,7 +45,7 @@ React Hook Form → servicio HTTP del frontend → API Express → modelo Mongoo
 | Pieza | Responsabilidad |
 |---|---|
 | [IngredientCalculator.tsx](../frontend/src/pages/IngredientCalculator.tsx) | Formulario, errores por campo, selección del catálogo y resultados |
-| [services/supplies.ts](../frontend/src/services/supplies.ts) | Peticiones HTTP para listar, crear y actualizar insumos |
+| [services/supplies.ts](../frontend/src/services/supplies.ts) | Peticiones HTTP para listar, crear, actualizar y eliminar insumos |
 | [backend/src/app.ts](../backend/src/app.ts) | Rutas y respuestas de la API |
 | [backend/src/supplies/validation.ts](../backend/src/supplies/validation.ts) | Valida datos externos antes de escribir en la base |
 | [backend/src/supplies/repository.ts](../backend/src/supplies/repository.ts) | Esquema y operaciones de MongoDB mediante Mongoose |
@@ -80,8 +83,9 @@ MongoDB guarda documentos. Mongoose permite definir su estructura mediante un **
 | `GET /api/supplies` | Devuelve `{ supplies: [...] }` |
 | `POST /api/supplies` | Crea un documento y devuelve `{ supply: ... }` con HTTP 201 |
 | `PUT /api/supplies/:id` | Actualiza sus datos y devuelve `{ supply: ... }` |
+| `DELETE /api/supplies/:id` | Elimina un insumo sin uso y devuelve HTTP 204 |
 
-Las entradas inválidas reciben HTTP 400, un insumo ausente recibe 404 y un fallo de acceso al catálogo recibe 503. Express 5 lleva los errores de las rutas asíncronas al manejador de errores de la API. [Guía de errores de Express](https://expressjs.com/en/guide/error-handling.html).
+Las entradas inválidas reciben HTTP 400, un insumo ausente recibe 404, una receta que bloquea la eliminación recibe 409 y un fallo de acceso al catálogo recibe 503. Express 5 lleva los errores de las rutas asíncronas al manejador de errores de la API. [Guía de errores de Express](https://expressjs.com/en/guide/error-handling.html).
 
 Tomamos React Hook Form y Mongoose de las convenciones de `superball`. Esta API utiliza Express directamente; `superball/backend` utiliza NestJS sobre una estructura más grande. La API actual es de uso local, escucha solo en esta computadora y todavía no tiene autenticación.
 
@@ -93,6 +97,6 @@ npm test
 npm run test:integration
 ```
 
-La integración crea una base con un nombre aleatorio `dessert_cost_test_...`, comprueba creación, lectura desde otra conexión y actualización, y elimina únicamente esa base temporal al terminar. No inserta datos de prueba en `dessert_cost_calculator`.
+La integración crea una base con un nombre aleatorio `dessert_cost_test_...`, comprueba creación, lectura desde otra conexión, actualización, protección de referencias y eliminación, y elimina únicamente esa base temporal al terminar. No inserta datos de prueba en `dessert_cost_calculator`.
 
 `npm run build:node` también compila el servidor. `npm run start:api` permite ejecutar ese resultado compilado. `npm run dev:api` utiliza `tsx` para ejecutar TypeScript y el modo watch de Node para reiniciar cuando cambia el backend.

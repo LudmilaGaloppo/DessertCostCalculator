@@ -32,7 +32,7 @@ Comportamiento implementado: editar un campo retira el resultado anterior; envia
 
 ## Etapa 4. Catálogo, recetas y navegación
 
-Implementado: catálogo de insumos y [recetas persistidas](08-recetas-persistidas.md), con creación, lectura y actualización en MongoDB local. React Hook Form administra los campos y `useFieldArray` las filas de ingredientes. La navegación separa Insumos de Recetas y cada cálculo consulta los precios actuales del catálogo.
+Implementado: catálogo de insumos y [recetas persistidas](08-recetas-persistidas.md), con creación, lectura y actualización en MongoDB local. El catálogo también permite eliminar insumos sin uso y protege los que estén referenciados por una receta. React Hook Form administra los campos y `useFieldArray` las filas de ingredientes. La navegación separa Insumos de Recetas y cada cálculo consulta los precios actuales del catálogo.
 
 Guardar varios insumos en el estado de la aplicación, seleccionarlos en una receta y obtener su subtotal. Introducir identificadores y relaciones entre datos. Incorporar navegación cuando haya pantallas con responsabilidades distintas.
 
