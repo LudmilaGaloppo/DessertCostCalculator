@@ -1,6 +1,6 @@
 # Packaging y costo de una cotización
 
-La aplicación ya tiene un catálogo de envases y una pantalla para calcular el costo de una cantidad de cookies. Los envases se guardan en MongoDB con sus datos de compra y capacidad; los stickers se configuran una sola vez porque se comparten entre bolsas y cajas.
+La aplicación tiene un catálogo de envases y una pantalla para calcular el costo de una cantidad de cookies. Los envases se pueden crear, recuperar, editar y eliminar en MongoDB con sus datos de compra y capacidad; los stickers se configuran una sola vez porque se comparten entre bolsas y cajas.
 
 ## Datos iniciales registrados
 
@@ -11,6 +11,8 @@ La aplicación ya tiene un catálogo de envases y una pantalla para calcular el 
 | Sticker | 80 por $28.000 | $350 | — | — |
 
 El sticker se mantiene separado del envase. Si cambia el precio de la plancha, se actualiza una sola compra y todas las cotizaciones vuelven a calcularlo.
+
+Para editar o eliminar un envase, primero se lo selecciona en **Envase guardado**. La pantalla muestra **Guardar cambios** y **Eliminar envase**. La eliminación pide confirmación, limpia el formulario y también retira esa presentación de la cotización si estaba elegida. Las cotizaciones todavía no se persisten, por lo que no existe una referencia histórica que bloquee la eliminación.
 
 ## Reglas actuales
 
@@ -36,7 +38,9 @@ El desglose muestra el costo e incluye la [energía estimada de la receta](11-en
 
 Las nuevas rutas son:
 
-- `GET`, `POST` y `PUT /api/packaging`
+- `GET`, `POST`, `PUT` y `DELETE /api/packaging`
 - `GET` y `PUT /api/settings/stickers`
+
+En las rutas con identificador, `DELETE /api/packaging/:id` devuelve HTTP 204 al eliminar, HTTP 400 para un identificador inválido y HTTP 404 si el envase ya no existe.
 
 Los datos de caja, bolsa y stickers acordados fueron guardados en la base MongoDB local de desarrollo.

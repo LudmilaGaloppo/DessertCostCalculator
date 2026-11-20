@@ -24,13 +24,13 @@ Para cambiar la conexión, copiá `backend/.env.example` a `backend/.env` y edit
 
 ## Qué se puede guardar
 
-- **Guardar insumo:** crea un documento con nombre, cantidad comprada, unidad y precio de compra.
+- **Guardar insumo:** crea un documento con nombre, cantidad comprada, unidad y precio de compra. Después limpia el formulario y vuelve a «Nuevo insumo» para cargar el siguiente.
 - **Cargar un insumo:** recupera esos datos desde el selector del catálogo.
 - **Actualizar insumo guardado:** reemplaza los datos de compra del insumo seleccionado, conservando su ID.
 - **Eliminar insumo:** pide confirmación y elimina el documento si ninguna receta lo utiliza.
 - **Limpiar:** inicia una entrada nueva; no elimina documentos de MongoDB.
 
-Los registros no se deduplican por nombre: podés tener distintas marcas o presentaciones. Para modificar o eliminar un insumo existente, primero seleccionalo en el catálogo. La pantalla muestra «Guardar cambios» y «Eliminar insumo» para hacer explícitas ambas acciones.
+Los registros no se deduplican por nombre: podés tener distintas marcas o presentaciones. Al crear uno nuevo, queda disponible en el catálogo aunque el formulario se reinicie. Para modificar o eliminar un insumo existente, primero seleccionalo en el catálogo. La pantalla muestra «Guardar cambios» y «Eliminar insumo» para hacer explícitas ambas acciones. Después de una actualización el insumo permanece seleccionado.
 
 Una receta conserva el identificador del insumo que utiliza. Por eso la API rechaza la eliminación con HTTP 409 mientras exista alguna receta que lo referencie e informa sus nombres. Primero hay que editar esas recetas para reemplazar o quitar el ingrediente. Esta protección se aplica en el servidor aunque la petición no provenga de la pantalla.
 
