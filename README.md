@@ -26,6 +26,8 @@ Uso inicial: personal. Posible evolución: que otros emprendedores puedan utiliz
 4. Continuar con [el código ejecutable y sus decisiones](docs/04-calculo-de-receta.md). La [primera función explicada](docs/03-primera-funcion.md) queda como material introductorio opcional. El recorrido completo está en [el plan de aprendizaje](docs/plan-de-aprendizaje.md).
 5. Abrir [la primera pantalla y su recorrido de datos](docs/05-primera-pantalla.md).
 
+Referencia de apoyo: [Git y GitHub Desktop, guía rápida](docs/git-y-github-desktop.md).
+
 ## Cómo vamos a trabajar
 
 - Avanzar por bloques funcionales completos, explicando decisiones de diseño y cómo comprobar el resultado.
