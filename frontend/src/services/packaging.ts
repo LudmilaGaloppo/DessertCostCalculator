@@ -13,6 +13,11 @@ export async function savePackaging(input: PackagingInput, id?: string): Promise
   })).packaging;
 }
 
+/** Elimina un envase guardado del catálogo de presentaciones. */
+export async function deletePackaging(id: string): Promise<void> {
+  await request<void>(`/api/packaging/${encodeURIComponent(id)}`, { method: 'DELETE' });
+}
+
 /** Recupera la compra de stickers usada por todas las presentaciones. */
 export async function getStickerSettings(signal?: AbortSignal): Promise<StickerSettings> {
   return (await request<{ stickers: StickerSettings }>('/api/settings/stickers', { signal })).stickers;

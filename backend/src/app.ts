@@ -121,6 +121,14 @@ export function createApp(repository: SupplyRepository, recipes: RecipeRepositor
     response.json({ packaging: saved });
   }
 
+  /** Elimina un envase guardado después de validar su identificador. */
+  async function deletePackaging(request: Request, response: Response) {
+    const id = request.params.id;
+    if (typeof id !== 'string' || !/^[a-f\d]{24}$/i.test(id)) throw new InputError('El identificador del envase no es válido.');
+    if (!await packaging.delete(id)) { response.status(404).json({ message: 'El envase no existe.' }); return; }
+    response.status(204).end();
+  }
+
   /** Devuelve la compra de stickers compartida por bolsas y cajas. */
   async function getStickerSettings(_request: Request, response: Response) {
     response.json({ stickers: await stickers.get() });
@@ -160,6 +168,7 @@ export function createApp(repository: SupplyRepository, recipes: RecipeRepositor
   app.get('/api/packaging', listPackaging);
   app.post('/api/packaging', createPackaging);
   app.put('/api/packaging/:id', updatePackaging);
+  app.delete('/api/packaging/:id', deletePackaging);
   app.get('/api/settings/stickers', getStickerSettings);
   app.put('/api/settings/stickers', updateStickerSettings);
   app.use(notFound);

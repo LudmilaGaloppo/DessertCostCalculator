@@ -65,6 +65,13 @@ test('la API valida JSON, crea insumos y distingue errores de entrada, ausencia 
     async create(value) { const saved = { ...value, id: recipeId }; savedPackaging.push(saved); return saved; },
     /** Simula un envase que ya no existe al intentar actualizarlo. */
     async update() { return null; },
+    /** Elimina el envase simulado si está presente. */
+    async delete(packagingId) {
+      const index = savedPackaging.findIndex((item) => item.id === packagingId);
+      if (index < 0) return false;
+      savedPackaging.splice(index, 1);
+      return true;
+    },
   };
   let stickerSettings: StickerSettings = { name: null, purchaseQuantity: null, purchasePrice: null };
   const stickerRepository: StickerSettingsRepository = {
@@ -107,6 +114,10 @@ test('la API valida JSON, crea insumos y distingue errores de entrada, ausencia 
   assert.equal((await fetch(packagingUrl, { method: 'POST', headers, body: JSON.stringify({ ...boxInput, capacity: 0 }) })).status, 400);
   assert.equal((await fetch(packagingUrl, { method: 'POST', headers, body: JSON.stringify(boxInput) })).status, 201);
   assert.equal((await (await fetch(packagingUrl)).json() as { packaging: Packaging[] }).packaging.length, 1);
+  assert.equal((await fetch(`${packagingUrl}/invalid`, { method: 'DELETE' })).status, 400);
+  assert.equal((await fetch(`${packagingUrl}/${recipeId}`, { method: 'DELETE' })).status, 204);
+  assert.deepEqual(await (await fetch(packagingUrl)).json(), { packaging: [] });
+  assert.equal((await fetch(`${packagingUrl}/${recipeId}`, { method: 'DELETE' })).status, 404);
   const stickerUrl = `http://127.0.0.1:${address.port}/api/settings/stickers`;
   assert.equal((await fetch(stickerUrl, { method: 'PUT', headers, body: JSON.stringify({ name: 'Sticker', purchaseQuantity: 80, purchasePrice: 28000 }) })).status, 200);
   assert.deepEqual(await (await fetch(stickerUrl)).json(), { stickers: { name: 'Sticker', purchaseQuantity: 80, purchasePrice: 28000 } });

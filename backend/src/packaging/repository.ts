@@ -5,6 +5,7 @@ export interface PackagingRepository {
   list(): Promise<Packaging[]>;
   create(input: PackagingInput): Promise<Packaging>;
   update(id: string, input: PackagingInput): Promise<Packaging | null>;
+  delete(id: string): Promise<boolean>;
 }
 
 /** Comprueba cantidades enteras positivas para compras y capacidades. */
@@ -42,5 +43,7 @@ export function createPackagingRepository(connection: Connection): PackagingRepo
       const document = await PackagingModel.findByIdAndUpdate(id, { $set: input }, { returnDocument: 'after', runValidators: true }).lean().exec();
       return document ? toPackaging(document) : null;
     },
+    /** Elimina el envase indicado y comunica si todavía existía. */
+    async delete(id) { return (await PackagingModel.findByIdAndDelete(id).lean().exec()) !== null; },
   };
 }

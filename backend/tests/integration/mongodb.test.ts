@@ -73,8 +73,12 @@ test('MongoDB local persiste insumos, permite releerlos desde otra conexión y a
   assert.deepEqual(await (await fetch(settingsUrl)).json(), { settings: { hourlyRate: 5000, gasDailyAverage: 3000, electricityDailyAverage: 2850 } });
   const packagingUrl = `http://127.0.0.1:${address.port}/api/packaging`;
   const boxInput = { name: 'Caja de prueba', kind: 'box', purchaseQuantity: 4, purchasePrice: 4800, capacity: 12, capacityUnit: 'unit', stickersPerPackage: 1 };
-  assert.equal((await fetch(packagingUrl, { method: 'POST', headers, body: JSON.stringify(boxInput) })).status, 201);
+  const packagingResponse = await fetch(packagingUrl, { method: 'POST', headers, body: JSON.stringify(boxInput) });
+  assert.equal(packagingResponse.status, 201);
+  const { packaging: savedBox } = await packagingResponse.json() as { packaging: { id: string } };
   assert.equal((await (await fetch(packagingUrl)).json() as { packaging: unknown[] }).packaging.length, 1);
+  assert.equal((await fetch(`${packagingUrl}/${savedBox.id}`, { method: 'DELETE' })).status, 204);
+  assert.deepEqual((await (await fetch(packagingUrl)).json() as { packaging: unknown[] }).packaging, []);
   const stickerUrl = `http://127.0.0.1:${address.port}/api/settings/stickers`;
   assert.equal((await fetch(stickerUrl, { method: 'PUT', headers, body: JSON.stringify({ name: 'Sticker de prueba', purchaseQuantity: 80, purchasePrice: 28000 }) })).status, 200);
   assert.deepEqual(await (await fetch(stickerUrl)).json(), { stickers: { name: 'Sticker de prueba', purchaseQuantity: 80, purchasePrice: 28000 } });
@@ -82,6 +86,6 @@ test('MongoDB local persiste insumos, permite releerlos desde otra conexión y a
   assert.equal(await connection.collection('supplies').countDocuments(), 1);
   assert.equal(await connection.collection('recipes').countDocuments(), 0);
   assert.equal(await connection.collection('settings').countDocuments(), 1);
-  assert.equal(await connection.collection('packaging').countDocuments(), 1);
+  assert.equal(await connection.collection('packaging').countDocuments(), 0);
   assert.equal(await connection.collection('sticker_settings').countDocuments(), 1);
 });

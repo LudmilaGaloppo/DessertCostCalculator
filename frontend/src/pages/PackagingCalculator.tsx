@@ -8,7 +8,7 @@ import { calculateProductionCost, calculateSaleQuoteCost } from '../domain/costs
 import { listSupplies } from '../services/supplies';
 import { listRecipes } from '../services/recipes';
 import { getCostSettings } from '../services/settings';
-import { getStickerSettings, listPackaging, savePackaging, saveStickerSettings } from '../services/packaging';
+import { deletePackaging, getStickerSettings, listPackaging, savePackaging, saveStickerSettings } from '../services/packaging';
 import SalePriceCalculator from '../components/SalePriceCalculator';
 
 const pesos = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
@@ -87,6 +87,22 @@ export default function PackagingCalculator() {
     finally { requestInProgress.current = false; setBusy(false); }
   }
 
+  /** Pide confirmación y elimina el envase seleccionado del catálogo. */
+  async function handleDeletePackaging() {
+    const selected = packaging.find((item) => item.id === selectedPackagingId);
+    if (!selected || requestInProgress.current) return;
+    if (!window.confirm(`¿Eliminar el envase “${selected.name}”? Esta acción no se puede deshacer.`)) return;
+    requestInProgress.current = true; setBusy(true); setError(''); setMessage(''); setResult(null);
+    try {
+      await deletePackaging(selected.id);
+      setPackaging((current) => current.filter((item) => item.id !== selected.id));
+      if (quoteForm.getValues('packagingId') === selected.id) quoteForm.setValue('packagingId', '');
+      newPackaging();
+      setMessage(`Se eliminó el envase “${selected.name}”.`);
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'No se pudo eliminar el envase.'); }
+    finally { requestInProgress.current = false; setBusy(false); }
+  }
+
   /** Guarda la compra compartida de stickers sin duplicarla en cada envase. */
   async function submitStickers(values: StickerFormValues) {
     if (requestInProgress.current) return;
@@ -138,7 +154,8 @@ export default function PackagingCalculator() {
             <div className="field-row price-field"><label className="field">Tipo<select {...packagingForm.register('kind')}><option value="individual">Individual</option><option value="box">Caja</option></select></label><label className="field">Capacidad en cookies<input {...packagingForm.register('capacity', { validate: (value) => validateDecimalField(value, 'la capacidad', true) })} inputMode="numeric" aria-invalid={Boolean(packagingForm.formState.errors.capacity)} /><FieldError id="capacity-error" message={packagingForm.formState.errors.capacity?.message} /></label></div>
             <div className="field-row price-field"><label className="field">Cantidad comprada<input {...packagingForm.register('purchaseQuantity', { validate: (value) => validateDecimalField(value, 'la cantidad comprada', true) })} inputMode="numeric" aria-invalid={Boolean(packagingForm.formState.errors.purchaseQuantity)} /><FieldError id="packaging-quantity-error" message={packagingForm.formState.errors.purchaseQuantity?.message} /></label><label className="field">Precio total (ARS)<input {...packagingForm.register('purchasePrice', { validate: (value) => validateDecimalField(value, 'el precio total') })} inputMode="decimal" aria-invalid={Boolean(packagingForm.formState.errors.purchasePrice)} /><FieldError id="packaging-price-error" message={packagingForm.formState.errors.purchasePrice?.message} /></label></div>
             <label className="field price-field">Stickers por envase<input {...packagingForm.register('stickersPerPackage', { validate: (value) => validateDecimalField(value, 'los stickers por envase') })} inputMode="numeric" aria-invalid={Boolean(packagingForm.formState.errors.stickersPerPackage)} /><FieldError id="stickers-per-package-error" message={packagingForm.formState.errors.stickersPerPackage?.message} /></label>
-            <button type="submit" className="primary-button save-button">{selectedPackagingId ? 'Actualizar envase' : 'Guardar envase'}</button>
+            <div className="catalog-actions"><button type="submit" className="primary-button">{selectedPackagingId ? 'Guardar cambios' : 'Guardar envase'}</button>{selectedPackagingId && <button type="button" className="danger-button" onClick={handleDeletePackaging}>Eliminar envase</button>}</div>
+            {selectedPackagingId && <p className="section-help catalog-help">Estás editando este envase. Modificá sus datos y elegí «Guardar cambios».</p>}
           </fieldset>
         </form>
         <form className="nested-card" onSubmit={stickerForm.handleSubmit(submitStickers)} noValidate>
