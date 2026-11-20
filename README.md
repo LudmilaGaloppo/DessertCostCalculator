@@ -18,7 +18,8 @@ Uso inicial: personal. Posible evolución: que otros emprendedores puedan utiliz
 - La pantalla de recetas permite agregar o quitar ingredientes, definir el rendimiento, calcular el desglose y crear, recuperar o actualizar recetas en MongoDB. Los costos se recalculan con los precios vigentes del catálogo; ver [recetas persistidas](docs/08-recetas-persistidas.md).
 - Las recetas guardan horas de trabajo y usan una tarifa general persistida para calcular la mano de obra. Los datos faltantes se muestran como pendientes; ver [mano de obra](docs/09-mano-de-obra.md).
 - El catálogo de packaging conserva compras, capacidades y stickers. La cotización calcula venta individual o en caja y rechaza superar la capacidad acordada; ver [packaging y cotización](docs/10-packaging-y-cotizacion.md).
-- Compilación, 28 pruebas y una integración real con MongoDB verificadas. La integración cubre insumos, recetas, configuración, envases y stickers; la revisión visual e interactiva continúa pendiente por un fallo del entorno de navegador.
+- El costo de producción prorratea gas y electricidad a partir de promedios diarios configurables y minutos por receta; ver [energía estimada](docs/11-energia-estimada.md).
+- Compilación, 29 pruebas y una integración real con MongoDB verificadas. La integración cubre insumos, recetas, configuración, energía, envases y stickers; la revisión visual e interactiva continúa pendiente por un fallo del entorno de navegador.
 - Frontend y backend separados en paquetes propios, conectados mediante npm workspaces. Los contratos de datos compartidos están en `shared/`; ver [la estructura del proyecto](docs/07-estructura-del-proyecto.md).
 - Desde esta carpeta: `npm ci` instala todos los paquetes, `npm run dev` inicia la web, `npm run typecheck` revisa tipos, `npm test` prueba ambas partes y `npm run example` ejecuta el ejemplo de consola. `npm run build` genera la web en `frontend/dist/` y la API en `backend/dist/`. Requiere Node.js 22 o posterior.
 - Para el catálogo, MongoDB debe estar activo y la API debe iniciarse en otra terminal con `npm run dev:api`. Conexión local predeterminada: `mongodb://127.0.0.1:27017/dessert_cost_calculator`; `backend/.env.example` permite configurarla mediante `backend/.env`. `npm run test:integration` comprueba persistencia en una base temporal propia.
@@ -35,6 +36,7 @@ Uso inicial: personal. Posible evolución: que otros emprendedores puedan utiliz
 8. Revisar [el formulario dinámico y la persistencia de recetas](docs/08-recetas-persistidas.md).
 9. Continuar con [mano de obra y costo parcial de producción](docs/09-mano-de-obra.md).
 10. Revisar [packaging y costo de una cotización](docs/10-packaging-y-cotizacion.md).
+11. Entender [la estimación sencilla de gas y electricidad](docs/11-energia-estimada.md).
 
 Referencia de apoyo: [Git y GitHub Desktop, guía rápida](docs/git-y-github-desktop.md).
 

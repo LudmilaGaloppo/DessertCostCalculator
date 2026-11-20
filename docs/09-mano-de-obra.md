@@ -31,4 +31,4 @@ La receta conserva `workingHours` junto con su rendimiento e ingredientes. El fr
 
 ## Límite actual
 
-El resultado incluye ingredientes y mano de obra cuando sus entradas están disponibles. Energía y packaging continúan fuera del subtotal porque todavía no definimos sus reglas y tarifas. El valor mostrado tampoco es un precio de venta.
+El resultado incluye ingredientes, mano de obra y la [estimación sencilla de energía](11-energia-estimada.md) cuando sus entradas están disponibles. El packaging se suma al cotizar la venta. El valor mostrado no es un precio de venta.

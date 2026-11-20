@@ -70,7 +70,7 @@ Poder recuperar insumos y recetas al volver a usar la aplicación. La forma de a
 | Plataforma y herramientas | Confirmar la propuesta web y explicar cada tecnología antes de preparar el proyecto |
 | Moneda | Propuesta inicial: pesos argentinos; confirmar cómo mostrar moneda y decimales |
 | Nuevas compras | Cómo actualizar costos cuando cambia el precio de un insumo y qué conservar de cálculos anteriores |
-| Energía | Método sencillo y explícito para estimar el costo de horno y hornallas |
+| Energía | Prorrateo simple por promedio diario implementado; se puede reemplazar por consumo técnico si se busca más precisión |
 | Trabajo | Tarifa general y horas por receta implementadas; falta definir la regla personal para atribuir tiempos |
 | Gastos generales | Cómo repartirlos sin duplicar gastos ya incluidos |
 | Venta | Packaging por unidad y caja implementado; quedan comisiones y otros gastos por canal |
